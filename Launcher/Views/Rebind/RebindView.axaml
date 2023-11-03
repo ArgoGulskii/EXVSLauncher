@@ -1,0 +1,205 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Launcher.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+             x:Class="Launcher.Views.Rebind.RebindView"
+             x:DataType="vm:RebindViewModel">
+    <Design.DataContext>
+        <vm:RebindViewModel />
+    </Design.DataContext>
+    <UserControl.Styles>
+        <Style Selector="StackPanel">
+            <Setter Property="Width" Value="720"/>
+            <Setter Property="Orientation" Value="Horizontal"/>
+        </Style>
+        <Style Selector="Border > StackPanel">
+            <Setter Property="Margin" Value="10 0 10 0"/>
+        </Style>
+        <Style Selector="Border">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        <Style Selector="Border.selected">
+            <Setter Property="BorderBrush" Value="Yellow"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        <Style Selector="Border.selected TextBlock">
+            <Setter Property="Foreground" Value="Yellow"/>
+        </Style>
+        <Style Selector="Border.selected TextBlock.selectedYellow">
+            <Setter Property="Foreground" Value="Yellow"/>
+        </Style>
+        <Style Selector="Border.selected TextBlock.selectedRed">
+            <Setter Property="Foreground" Value="Red"/>
+        </Style>
+        <Style Selector="Border.selected TextBlock Run">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Border.selected TextBlock Run.selectedYellow">
+            <Setter Property="Foreground" Value="Yellow"/>
+        </Style>
+        <Style Selector="Border.selected TextBlock Run.selectedRed">
+            <Setter Property="Foreground" Value="Red"/>
+        </Style>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="Height" Value="30"/>
+        </Style>
+        <Style Selector="TextBlock.header">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBlock.label">
+            <Setter Property="Width" Value="360"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="5 0 -10 0"/>
+        </Style>
+        <Style Selector="TextBlock.value">
+            <Setter Property="Width" Value="360"/>
+            <Setter Property="FontFamily" Value="Inconsolata,Consolas,Monospace,Courier"/>
+            <Setter Property="FontSize" Value="32"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+        </Style>
+    </UserControl.Styles>
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="1"
+                    MaterialOpacity="0.65" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+        <StackPanel IsVisible="{Binding ModalVisible}" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
+            <StackPanel>
+                <TextBlock Width="720" FontSize="48" Height="60" TextAlignment="Center" Text="{Binding ModalText}"/>
+            </StackPanel>
+        </StackPanel>
+        <StackPanel IsVisible="{Binding !ModalVisible}" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
+            <StackPanel>
+                <TextBlock Width="720" Classes="header" Text="{Binding ControllerText}"/>
+            </StackPanel>
+
+            <Border Classes.selected="{Binding PresetSelected}">
+                <StackPanel>
+                    <TextBlock Width="720" Classes="header">
+                        <Run Classes="selectedYellow">
+                            «
+                        </Run>
+                        <Run Text="{Binding PresetText}"/>
+                        <Run Classes="selectedYellow">
+                            »
+                        </Run>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <Border Classes.selected="{Binding MainSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Main</TextBlock>
+                    <TextBlock Classes="value" Text="{Binding MainText}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Classes.selected="{Binding MeleeSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Melee</TextBlock>
+                    <TextBlock Classes="value" Text="{Binding MeleeText}"/>
+                </StackPanel>
+            </Border>
+            <Border Classes.selected="{Binding BoostSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Boost</TextBlock>
+                    <TextBlock Classes="value" Text="{Binding BoostText}"/>
+                </StackPanel>
+            </Border>
+            <Border Classes.selected="{Binding SwitchSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Switch Targets</TextBlock>
+                    <TextBlock Classes="value" Text="{Binding SwitchText}"/>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Height="18">
+            </StackPanel>
+
+            <Border Classes.selected="{Binding SubSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Sub</TextBlock>
+                    <TextBlock Classes="value" Text="{Binding SubText}"/>
+                </StackPanel>
+            </Border>
+            <Border Classes.selected="{Binding SpecialShootingSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Special Shooting</TextBlock>
+                    <TextBlock Classes="value" Text="{Binding SpecialShootingText}"/>
+                </StackPanel>
+            </Border>
+            <Border Classes.selected="{Binding SpecialMeleeSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Special Melee</TextBlock>
+                    <TextBlock Classes="value" Text="{Binding SpecialMeleeText}"/>
+                </StackPanel>
+            </Border>
+            <Border Classes.selected="{Binding BurstSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Burst</TextBlock>
+                    <TextBlock Classes="value" Text="{Binding BurstText}"/>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Height="18">
+            </StackPanel>
+
+            <Border Classes.selected="{Binding StartSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Start/Comms</TextBlock>
+                    <TextBlock Classes="value" Text="{Binding StartText}"/>
+                </StackPanel>
+            </Border>
+            <Border Classes.selected="{Binding CardSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Card</TextBlock>
+                    <TextBlock Classes="value" Text="{Binding CardText}"/>
+                </StackPanel>
+            </Border>
+            <StackPanel Height="36">
+            </StackPanel>
+            <Border Classes.selected="{Binding TestSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Test</TextBlock>
+                    <TextBlock Classes="value">
+                        <Run Classes.selectedRed="{Binding TestA}">
+                            A
+                        </Run>
+                        <Run Classes.selectedRed="{Binding TestB}">
+                            B
+                        </Run>
+                        <Run Classes.selectedRed="{Binding TestC}">
+                            C
+                        </Run>
+                        <Run Classes.selectedRed="{Binding TestD}">
+                            D
+                        </Run>
+                        <Run Classes.selectedRed="{Binding TestStart}">
+                            Start
+                        </Run>
+                        <Run Classes.selectedRed="{Binding TestCard}">
+                            Card
+                        </Run>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+            <Border Classes.selected="{Binding SaveSelected}">
+                <StackPanel>
+                    <TextBlock Classes="label">Save and exit</TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Panel>
+</UserControl>

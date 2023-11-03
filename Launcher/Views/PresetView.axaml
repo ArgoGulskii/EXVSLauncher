@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Launcher.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
+             x:Class="Launcher.Views.PresetView"
+             x:DataType="vm:PresetViewModel">
+    <Design.DataContext>
+        <vm:PresetViewModel />
+    </Design.DataContext>
+
+    <Grid Grid.IsSharedSizeScope="True" Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="120"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+        <Grid.Styles>
+            <Style Selector="Border" >
+                <Setter Property="Padding" Value="5,5,5,5" />
+            </Style>
+            <Style Selector="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+            <Style Selector="ComboBox">
+                <Setter Property="VerticalAlignment" Value="Stretch"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            </Style>
+        </Grid.Styles>
+
+        <Border Grid.Row="0" Grid.Column="0">
+            <TextBlock Text="Name" />
+        </Border>
+        <Border Grid.Row="0" Grid.Column="1">
+            <TextBox Text="{Binding Name}"/>
+        </Border>
+    </Grid>
+</UserControl>

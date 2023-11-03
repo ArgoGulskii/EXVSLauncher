@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Launcher.ViewModels"
+        xmlns:rebind="clr-namespace:Launcher.Views.Rebind"
+        mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+        x:Class="Launcher.Views.Rebind.RebindWindow"
+        x:DataType="vm:RebindViewModel"
+        Title="RebindWindow"
+        Background="Transparent"
+        TransparencyLevelHint="AcrylicBlur">
+    <Window.Styles>
+        <Style Selector="StackPanel">
+            <Setter Property="Width" Value="720"/>
+            <Setter Property="Orientation" Value="Horizontal"/>
+        </Style>
+        <Style Selector="StackPanel.selected">
+        </Style>
+        <Style Selector="StackPanel.selected > TextBlock">
+            <Setter Property="Foreground" Value="Yellow"/>
+        </Style>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="Height" Value="36"/>
+        </Style>
+        <Style Selector="TextBlock.header">
+            <Setter Property="Width" Value="720"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBlock.label">
+            <Setter Property="Width" Value="360"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style Selector="TextBlock.value">
+            <Setter Property="Width" Value="360"/>
+            <Setter Property="FontFamily" Value="Inconsolata,Consolas,Monospace,Courier"/>
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+        </Style>
+    </Window.Styles>
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="1"
+                    MaterialOpacity="0.65" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+        <rebind:RebindView Name="rebindView" DataContext="{Binding .}"/>
+    </Panel>
+</Window>

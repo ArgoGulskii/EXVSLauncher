@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Launcher.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
+             x:Class="Launcher.Views.ClientView"
+             x:DataType="vm:ClientViewModel">
+    <Design.DataContext>
+        <vm:ClientViewModel />
+    </Design.DataContext>
+
+    <Grid Grid.IsSharedSizeScope="True" Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="120"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+        <Grid.Styles>
+            <Style Selector="Border" >
+                <Setter Property="Padding" Value="5,5,5,5" />
+            </Style>
+            <Style Selector="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+            <Style Selector="ComboBox">
+                <Setter Property="VerticalAlignment" Value="Stretch"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            </Style>
+        </Grid.Styles>
+
+        <Border Grid.Row="0" Grid.Column="0">
+            <TextBlock Text="Name" />
+        </Border>
+        <Border Grid.Row="0" Grid.Column="1">
+            <TextBox Text="{Binding Name}"/>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="0">
+            <TextBlock Text="Storage Path" Grid.Row="1" Grid.Column="0" />
+        </Border>
+        <Border Grid.Row="1" Grid.Column="1">
+            <TextBox Text="{Binding Path}"/>
+        </Border>
+
+        <Border Grid.Row="2" Grid.Column="0">
+            <TextBlock Text="Mode"/>
+        </Border>
+
+        <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto" Grid.Row="2" Grid.Column="1">
+            <Border Grid.Row="0" Grid.Column="0" Height="50">
+                <ComboBox SelectedIndex="{Binding Mode}">
+                    <ComboBoxItem>Client</ComboBoxItem>
+                    <ComboBoxItem>LM</ComboBoxItem>
+                </ComboBox>
+            </Border>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2">
+                <CheckBox Content="Enabled" IsChecked="{Binding Enabled}" Margin="5 0 5 0"/>
+                <CheckBox Content="Hidden" IsChecked="{Binding Hidden}" Margin="5 0 5 0"/>
+                <CheckBox Content="Rebind" IsEnabled="{Binding !Hidden, Mode=OneWay}" IsChecked="{Binding AutoRebind}" Margin="5 0 5 0"/>
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="3" Grid.Column="0">
+            <TextBlock Text="Network"/>
+        </Border>
+        <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto" Grid.Row="3" Grid.Column="1">
+            <Border Grid.Row="0" Grid.Column="0">
+                <ComboBox SelectedIndex="{Binding NetworkMode}">
+                    <ComboBoxItem>Interface</ComboBoxItem>
+                    <ComboBoxItem>IP Address</ComboBoxItem>
+                </ComboBox>
+            </Border>
+            <Border Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2">
+                <TextBox Text="{Binding NetworkValue}"/>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
