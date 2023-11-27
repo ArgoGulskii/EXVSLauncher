@@ -75,17 +75,113 @@
                     MaterialOpacity="0.65" />
             </ExperimentalAcrylicBorder.Material>
         </ExperimentalAcrylicBorder>
-        <StackPanel IsVisible="{Binding ModalVisible}" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
-            <StackPanel>
+        <Grid IsVisible="{Binding ModalVisible}" HorizontalAlignment="Center" VerticalAlignment="Stretch">
+            <Grid.RowDefinitions>
+                <!-- Fill -->
+                <RowDefinition Height="*"/>
+
+                <!-- Header image -->
+                <RowDefinition Height="auto"/>
+
+                <!-- Spacer -->
+                <RowDefinition Height="*"/>
+
+                <!-- Message -->
+                <RowDefinition Height="576"/>
+
+                <!-- Fill -->
+                <RowDefinition Height="2*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0"/>
+
+            <Image MaxWidth="550" Source="{Binding HeaderBitmap}" Grid.Row="1"/>
+
+            <StackPanel Grid.Row="2"/>
+
+            <StackPanel Grid.Row="3">
                 <TextBlock Width="720" FontSize="48" Height="60" TextAlignment="Center" Text="{Binding ModalText}"/>
             </StackPanel>
-        </StackPanel>
-        <StackPanel IsVisible="{Binding !ModalVisible}" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
-            <StackPanel>
+
+            <StackPanel Grid.Row="4"/>
+        </Grid>
+        <Grid IsVisible="{Binding !ModalVisible}" HorizontalAlignment="Center" VerticalAlignment="Stretch">
+            <Grid.RowDefinitions>
+                <!-- Spacer -->
+                <RowDefinition Height="*"/>
+
+                <!-- Header image -->
+                <RowDefinition Height="auto"/>
+
+                <!-- Fill -->
+                <RowDefinition Height="*"/>
+
+                <!-- Controller name -->
+                <RowDefinition Height="36"/>
+
+                <!-- Preset -->
+                <RowDefinition Height="36"/>
+
+                <!-- Main -->
+                <RowDefinition Height="36"/>
+
+                <!-- Melee -->
+                <RowDefinition Height="36"/>
+
+                <!-- Boost -->
+                <RowDefinition Height="36"/>
+
+                <!-- Switch Targets -->
+                <RowDefinition Height="36"/>
+
+                <!-- Spacer -->
+                <RowDefinition Height="18"/>
+
+                <!-- Sub -->
+                <RowDefinition Height="36"/>
+
+                <!-- Special Shooting -->
+                <RowDefinition Height="36"/>
+
+                <!-- Special Melee -->
+                <RowDefinition Height="36"/>
+
+                <!-- Burst -->
+                <RowDefinition Height="36"/>
+
+                <!-- Spacer -->
+                <RowDefinition Height="18"/>
+
+                <!-- Start -->
+                <RowDefinition Height="36"/>
+
+                <!-- Card -->
+                <RowDefinition Height="36"/>
+
+                <!-- Spacer -->
+                <RowDefinition Height="36"/>
+
+                <!-- Test -->
+                <RowDefinition Height="36"/>
+
+                <!-- Save -->
+                <RowDefinition Height="36"/>
+
+                <!-- Fill -->
+                <RowDefinition Height="2*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0"/>
+
+            <Image MaxWidth="550" Source="{Binding HeaderBitmap}" Grid.Row="1"/>
+
+            <StackPanel Grid.Row="2"/>
+
+            <StackPanel Grid.Row="3">
                 <TextBlock Width="720" Classes="header" Text="{Binding ControllerText}"/>
             </StackPanel>
 
-            <Border Classes.selected="{Binding PresetSelected}">
+            <Border Classes.selected="{Binding PresetSelected}" Grid.Row="4">
                 <StackPanel>
                     <TextBlock Width="720" Classes="header">
                         <Run Classes="selectedYellow">
@@ -99,78 +195,77 @@
                 </StackPanel>
             </Border>
 
-            <Border Classes.selected="{Binding MainSelected}">
+            <Border Classes.selected="{Binding MainSelected}" Grid.Row="5">
                 <StackPanel>
                     <TextBlock Classes="label">Main</TextBlock>
                     <TextBlock Classes="value" Text="{Binding MainText}"/>
                 </StackPanel>
             </Border>
 
-            <Border Classes.selected="{Binding MeleeSelected}">
+            <Border Classes.selected="{Binding MeleeSelected}" Grid.Row="6">
                 <StackPanel>
                     <TextBlock Classes="label">Melee</TextBlock>
                     <TextBlock Classes="value" Text="{Binding MeleeText}"/>
                 </StackPanel>
             </Border>
-            <Border Classes.selected="{Binding BoostSelected}">
+            <Border Classes.selected="{Binding BoostSelected}" Grid.Row="7">
                 <StackPanel>
                     <TextBlock Classes="label">Boost</TextBlock>
                     <TextBlock Classes="value" Text="{Binding BoostText}"/>
                 </StackPanel>
             </Border>
-            <Border Classes.selected="{Binding SwitchSelected}">
+            <Border Classes.selected="{Binding SwitchSelected}" Grid.Row="8">
                 <StackPanel>
                     <TextBlock Classes="label">Switch Targets</TextBlock>
                     <TextBlock Classes="value" Text="{Binding SwitchText}"/>
                 </StackPanel>
             </Border>
 
-            <StackPanel Height="18">
-            </StackPanel>
+            <StackPanel Grid.Row="9"/>
 
-            <Border Classes.selected="{Binding SubSelected}">
+            <Border Classes.selected="{Binding SubSelected}" Grid.Row="10">
                 <StackPanel>
                     <TextBlock Classes="label">Sub</TextBlock>
                     <TextBlock Classes="value" Text="{Binding SubText}"/>
                 </StackPanel>
             </Border>
-            <Border Classes.selected="{Binding SpecialShootingSelected}">
+            <Border Classes.selected="{Binding SpecialShootingSelected}" Grid.Row="11">
                 <StackPanel>
                     <TextBlock Classes="label">Special Shooting</TextBlock>
                     <TextBlock Classes="value" Text="{Binding SpecialShootingText}"/>
                 </StackPanel>
             </Border>
-            <Border Classes.selected="{Binding SpecialMeleeSelected}">
+            <Border Classes.selected="{Binding SpecialMeleeSelected}" Grid.Row="12">
                 <StackPanel>
                     <TextBlock Classes="label">Special Melee</TextBlock>
                     <TextBlock Classes="value" Text="{Binding SpecialMeleeText}"/>
                 </StackPanel>
             </Border>
-            <Border Classes.selected="{Binding BurstSelected}">
+            <Border Classes.selected="{Binding BurstSelected}" Grid.Row="13">
                 <StackPanel>
                     <TextBlock Classes="label">Burst</TextBlock>
                     <TextBlock Classes="value" Text="{Binding BurstText}"/>
                 </StackPanel>
             </Border>
 
-            <StackPanel Height="18">
-            </StackPanel>
+            <StackPanel Grid.Row="14"/>
 
-            <Border Classes.selected="{Binding StartSelected}">
+            <Border Classes.selected="{Binding StartSelected}" Grid.Row="15">
                 <StackPanel>
                     <TextBlock Classes="label">Start/Comms</TextBlock>
                     <TextBlock Classes="value" Text="{Binding StartText}"/>
                 </StackPanel>
             </Border>
-            <Border Classes.selected="{Binding CardSelected}">
+            <Border Classes.selected="{Binding CardSelected}"  Grid.Row="16">
                 <StackPanel>
                     <TextBlock Classes="label">Card</TextBlock>
                     <TextBlock Classes="value" Text="{Binding CardText}"/>
                 </StackPanel>
             </Border>
-            <StackPanel Height="36">
-            </StackPanel>
-            <Border Classes.selected="{Binding TestSelected}">
+
+            <StackPanel Grid.Row="17"/>
+
+            <Border Classes.selected="{Binding TestSelected}" Grid.Row="18">
                 <StackPanel>
                     <TextBlock Classes="label">Test</TextBlock>
                     <TextBlock Classes="value">
@@ -195,11 +290,12 @@
                     </TextBlock>
                 </StackPanel>
             </Border>
-            <Border Classes.selected="{Binding SaveSelected}">
+            <Border Classes.selected="{Binding SaveSelected}" Grid.Row="19">
                 <StackPanel>
                     <TextBlock Classes="label">Save and exit</TextBlock>
                 </StackPanel>
             </Border>
-        </StackPanel>
+            <StackPanel Grid.Row="20"/>
+        </Grid>
     </Panel>
 </UserControl>
