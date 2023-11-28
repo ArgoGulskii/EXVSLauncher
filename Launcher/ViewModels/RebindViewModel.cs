@@ -173,6 +173,7 @@ public partial class RebindViewModel : ViewModelBase
         ModalVisible = true;
 
         SelectedIndex = 0;
+        lastState_ = new();
 
         ChangePresets(RebindBindings.PresetPSStick);
         UpdateBindingText();
@@ -186,10 +187,12 @@ public partial class RebindViewModel : ViewModelBase
             ControllerEnabled = false,
         };
         config.Write(configPath_);
+        active_ = true;
     }
 
     public void Finish()
     {
+        active_ = false;
         rebindWindow_.Hide();
         var config = new ConfigIni()
         {
@@ -336,6 +339,7 @@ public partial class RebindViewModel : ViewModelBase
 
     public void DeviceSelected(InputDevice device)
     {
+        active_ = true;
         ModalVisible = false;
         ControllerText = $"{device.ManufacturerName} {device.ProductName} ({device.VendorId:X4}:{device.ProductId:X4})";
         controllerPath_ = device.DevicePath;
@@ -354,6 +358,8 @@ public partial class RebindViewModel : ViewModelBase
 
     public void HandleInput(InputState input)
     {
+        if (!active_) return;
+
         var diff = lastState_.Diff(input);
         lastState_ = input;
 
@@ -398,6 +404,7 @@ public partial class RebindViewModel : ViewModelBase
         }
     }
 
+    private bool active_ = false;
     private InputState lastState_ = new();
 
     private bool modalVisible_ = true;
