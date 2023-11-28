@@ -343,7 +343,7 @@ public partial class RebindViewModel : ViewModelBase
     {
         active_ = true;
         ModalVisible = false;
-        ControllerText = $"{device.ManufacturerName} {device.ProductName} ({device.VendorId:X4}:{device.ProductId:X4})";
+        ControllerText = $"{device.ProductName} ({device.VendorId:X4}:{device.ProductId:X4})";
         controllerPath_ = device.DevicePath;
     }
 
