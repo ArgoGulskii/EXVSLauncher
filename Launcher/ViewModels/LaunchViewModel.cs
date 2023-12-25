@@ -137,6 +137,7 @@ public partial class LaunchViewModel : ViewModelBase
         {
             if (client.ClientInfo.Enabled && !client.ClientInfo.Hidden)
             {
+                client.ClientInfo.Id = splitIdx + 1;
                 client.WindowLocation = splits[splitIdx++];
             }
             else

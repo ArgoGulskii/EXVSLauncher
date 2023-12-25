@@ -60,8 +60,6 @@ public class InputDevice
         VendorId = device.VendorId;
         ProductId = device.ProductId;
         DevicePath = device.DevicePath!;
-
-        Console.WriteLine($"New device: {this}");
     }
 
     public override string ToString()

@@ -142,12 +142,13 @@ public class RebindBindings
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public partial class RebindViewModel : ViewModelBase
 {
-    public RebindViewModel() : this(null!, null!)
+    public RebindViewModel() : this(0, null!, null!)
     {
     }
 
-    public RebindViewModel(RebindWindow window, string configPath)
+    public RebindViewModel(int id, RebindWindow window, string configPath)
     {
+        id_ = id;
         rebindWindow_ = window;
         configPath_ = configPath;
 
@@ -169,6 +170,11 @@ public partial class RebindViewModel : ViewModelBase
         Reset();
     }
 
+    public override string ToString()
+    {
+        return $"RebindViewModel({id_})";
+    }
+
     public void Reset()
     {
         ModalText = "Do not press any buttons";
@@ -183,6 +189,8 @@ public partial class RebindViewModel : ViewModelBase
 
     public void Start()
     {
+        Console.WriteLine($"{this}: started");
+
         rebindWindow_.Show();
         var config = new ConfigIni()
         {
@@ -194,6 +202,8 @@ public partial class RebindViewModel : ViewModelBase
 
     public void Finish()
     {
+        Console.WriteLine($"{this}: finished");
+
         active_ = false;
         rebindWindow_.Hide();
         var config = new ConfigIni()
@@ -408,6 +418,7 @@ public partial class RebindViewModel : ViewModelBase
 
     private bool active_ = false;
     private InputState lastState_ = new();
+    private int id_;
 
     private bool modalVisible_ = true;
     public bool ModalVisible

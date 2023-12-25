@@ -9,6 +9,7 @@ public partial class ClientViewModel : ViewModelBase
     public ClientViewModel()
     {
         name_ = "";
+        Id = 0;
         Mode = 0;
         NetworkMode = 0;
         NetworkValue = "";
@@ -32,6 +33,8 @@ public partial class ClientViewModel : ViewModelBase
         get => name_;
         set => this.RaiseAndSetIfChanged(ref name_, value);
     }
+
+    public int Id { get; set; }
 
     public int Mode { get; set; }
 

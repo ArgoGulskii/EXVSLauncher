@@ -38,6 +38,7 @@ internal class InputManager
 
     public void Start()
     {
+        Console.WriteLine("Input manager started");
         RawInputDevice.RegisterDevice(HidUsageAndPage.GamePad, RawInputDeviceFlags.InputSink | RawInputDeviceFlags.DevNotify, inputWindowHwnd);
         RawInputDevice.RegisterDevice(HidUsageAndPage.Joystick, RawInputDeviceFlags.InputSink | RawInputDeviceFlags.DevNotify, inputWindowHwnd);
         inputHwndSource.AddHook(Hook);
@@ -45,12 +46,14 @@ internal class InputManager
 
     public void AddRebindWindow(RebindViewModel viewModel)
     {
+        Console.WriteLine($"Added new rebind window {viewModel}");
         WaitingRebinds.Add(viewModel);
         PromptNextRebind();
     }
 
     public void RemoveRebindWindow(RebindViewModel viewModel)
     {
+        Console.WriteLine($"Removing rebind window {viewModel}");
         WaitingRebinds.Remove(viewModel);
         var remove = new List<RawInputDeviceHandle>();
         foreach (var (deviceHandle, rvm) in AssignedRebinds)
@@ -66,7 +69,9 @@ internal class InputManager
 
     void DeviceArrived(RawInputDeviceHandle handle, RawInputDevice device)
     {
-        CurrentDevices.Add(handle, new InputDevice(device));
+        var inputDevice = new InputDevice(device);
+        Console.WriteLine($"New device: {inputDevice}");
+        CurrentDevices.Add(handle, inputDevice);
     }
 
     void DeviceLeft(RawInputDeviceHandle handle)
@@ -111,6 +116,8 @@ internal class InputManager
         AssignedRebinds[deviceHandle] = rebind;
         rebind.DeviceSelected(device);
 
+        Console.WriteLine($"Device assigned: {device} => {rebind}");
+
         PromptNextRebind();
     }
 
@@ -118,6 +125,7 @@ internal class InputManager
     {
         if (WaitingRebinds.Count > 0)
         {
+            Console.WriteLine($"Prompting rebind: {WaitingRebinds[0]}");
             WaitingRebinds[0].DeviceAvailable();
         }
     }
