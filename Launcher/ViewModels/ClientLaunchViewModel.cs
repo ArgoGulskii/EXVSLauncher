@@ -64,10 +64,13 @@ public class ClientLaunchViewModel : ViewModelBase
 
         // TODO: Write the config file.
 
+        var gamePath = ClientInfo.GamePath ?? "";
+        if (gamePath == "") gamePath = mvm.PresetsViewModel.SelectedPreset!.GamePath;
+
         Process process = new();
-        process.StartInfo.FileName = mvm.SettingsViewModel.GamePath;
+        process.StartInfo.FileName = gamePath;
         process.StartInfo.ArgumentList.Add(ClientInfo.Path);
-        process.StartInfo.WorkingDirectory = Path.GetDirectoryName(mvm.SettingsViewModel.GamePath);
+        process.StartInfo.WorkingDirectory = Path.GetDirectoryName(gamePath);
         process.EnableRaisingEvents = true;
         process.Exited += OnProcessExit;
 

@@ -43,4 +43,18 @@ public partial class PresetViewModel : ViewModelBase
         get => clients_;
         set => this.RaiseAndSetIfChanged(ref clients_, value);
     }
+
+    private string gamePath_;
+    public string GamePath
+    {
+        get => gamePath_;
+        set => this.RaiseAndSetIfChanged(ref gamePath_, value);
+    }
+
+    private string serverPath_;
+    public string ServerPath
+    {
+        get => serverPath_;
+        set => this.RaiseAndSetIfChanged(ref serverPath_, value);
+    }
 }

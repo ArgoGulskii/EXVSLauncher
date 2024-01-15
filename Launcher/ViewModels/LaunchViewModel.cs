@@ -124,11 +124,19 @@ public partial class LaunchViewModel : ViewModelBase
         }
 
         // Start the server if it's not already running.
-        if (FindServer(Main.SettingsViewModel.ServerPath) == null)
+        var serverPath = Main.PresetsViewModel.SelectedPreset.ServerPath;
+        if (serverPath == null)
+        {
+            var box = MessageBoxManager.GetMessageBoxStandard("Error", $"Server path not specified in preset", ButtonEnum.Ok);
+            await box.ShowAsync();
+            return;
+        }
+
+        if (FindServer(serverPath) == null)
         {
             Process process = new();
-            process.StartInfo.FileName = Main.SettingsViewModel.ServerPath;
-            process.StartInfo.WorkingDirectory = Path.GetDirectoryName(Main.SettingsViewModel.ServerPath);
+            process.StartInfo.FileName = serverPath;
+            process.StartInfo.WorkingDirectory = Path.GetDirectoryName(serverPath);
             process.Start();
         }
 

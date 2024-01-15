@@ -13,6 +13,8 @@ public partial class PresetsViewModel : ViewModelBase
         {
             new PresetViewModel {
                 Name = "Multibox",
+                GamePath = "C:\\GXX10JPN27\\vsac25_Release.exe",
+                ServerPath = "C:\\GXX10JPN27\\Server\\server.exe",
                 Clients = new ClientsViewModel
                 {
                     Clients = new ObservableCollection<ClientViewModel>
@@ -78,6 +80,8 @@ public partial class PresetsViewModel : ViewModelBase
             new PresetViewModel
             {
                 Name = "Radmin Client",
+                GamePath = "C:\\GXX10JPN27\\vsac25_Release.exe",
+                ServerPath = "C:\\GXX10JPN27\\Server\\server.exe",
                 Clients = new ClientsViewModel
                 {
                     Clients = new ObservableCollection<ClientViewModel>

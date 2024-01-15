@@ -43,6 +43,8 @@ public partial class ClientViewModel : ViewModelBase
 
     public string Path { get; set; }
 
+    public string? GamePath { get; set; }
+
     private bool hidden_;
     public bool Hidden
     {

@@ -40,5 +40,19 @@
         <Border Grid.Row="0" Grid.Column="1">
             <TextBox Text="{Binding Name}"/>
         </Border>
+
+        <Border Grid.Row="1" Grid.Column="0">
+            <TextBlock Text="Game Path" />
+        </Border>
+        <Border Grid.Row="1" Grid.Column="1">
+            <TextBox Text="{Binding GamePath}"/>
+        </Border>
+
+        <Border Grid.Row="2" Grid.Column="0">
+            <TextBlock Text="Server Path" />
+        </Border>
+        <Border Grid.Row="2" Grid.Column="1">
+            <TextBox Text="{Binding ServerPath}"/>
+        </Border>
     </Grid>
 </UserControl>

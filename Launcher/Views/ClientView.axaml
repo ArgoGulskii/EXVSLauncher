@@ -12,12 +12,15 @@
 
     <Grid Grid.IsSharedSizeScope="True" Margin="10">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="120"/>
+            <ColumnDefinition Width="150"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>
             <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="25"/>
             <RowDefinition Height="50"/>
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
@@ -80,5 +83,15 @@
                 <TextBox Text="{Binding NetworkValue}"/>
             </Border>
         </Grid>
+
+        <Border Grid.Row="5" Grid.Column="0">
+            <TextBlock Text="Advanced Options"/>
+        </Border>
+        <Border Grid.Row="6" Grid.Column="0">
+            <TextBlock Text="Game Path Override"/>
+        </Border>
+        <Border Grid.Row="6" Grid.Column="1">
+            <TextBox Text="{Binding GamePath}"/>
+        </Border>
     </Grid>
 </UserControl>

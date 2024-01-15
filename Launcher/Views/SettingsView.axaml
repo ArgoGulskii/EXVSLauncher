@@ -35,24 +35,17 @@
         </Grid.Styles>
 
         <Border Grid.Row="0" Grid.Column="0">
-            <TextBlock Text="Game Path" />
+            <TextBlock Text="Placeholder" />
         </Border>
         <Border Grid.Row="0" Grid.Column="1">
-            <TextBox Text="{Binding GamePath}"/>
+            <TextBox Text=""/>
         </Border>
 
         <Border Grid.Row="1" Grid.Column="0">
             <TextBlock Text="Server Path" Grid.Row="1" Grid.Column="0" />
         </Border>
         <Border Grid.Row="1" Grid.Column="1">
-            <TextBox Text="{Binding ServerPath}"/>
+            <TextBox Text=""/>
         </Border>
-
-        <Border Grid.Row="2" Grid.Column="0">
-            <TextBlock Text="Rebind inputs"/>
-        </Border>
-		<Border Grid.Row="2" Grid.Column="1">
-			<CheckBox />
-		</Border>
     </Grid>
 </UserControl>
