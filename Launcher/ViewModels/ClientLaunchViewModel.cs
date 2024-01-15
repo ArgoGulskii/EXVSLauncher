@@ -58,9 +58,9 @@ public class ClientLaunchViewModel : ViewModelBase
         return result;
     }
 
-    public void Start(MainViewModel mvm)
+    public bool Start(MainViewModel mvm)
     {
-        if (!ClientInfo.Enabled) return;
+        if (!ClientInfo.Enabled) return true;
 
         // TODO: Write the config file.
 
@@ -70,10 +70,19 @@ public class ClientLaunchViewModel : ViewModelBase
         process.StartInfo.WorkingDirectory = Path.GetDirectoryName(mvm.SettingsViewModel.GamePath);
         process.EnableRaisingEvents = true;
         process.Exited += OnProcessExit;
-        process.Start();
 
+        try
+        {
+            process.Start();
+        } catch (Exception ex)
+        {
+            StateText = "Failed to launch: " + ex.Message;
+            return false;
+        }
         StateText = "Launched";
         process_ = process;
+
+        return true;
     }
 
     public void Kill()

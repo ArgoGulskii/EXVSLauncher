@@ -159,7 +159,7 @@ public partial class LaunchViewModel : ViewModelBase
                     client.StartRebind();
                 }
 
-                client.Start(Main);
+                if (!client.Start(Main)) return;
                 await client.WaitForWindow();
                 client.MoveGameWindow();
             }
