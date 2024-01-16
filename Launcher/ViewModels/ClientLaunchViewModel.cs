@@ -121,7 +121,7 @@ public class ClientLaunchViewModel : ViewModelBase
         RebindViewModel rebindViewModel_ = new(ClientInfo.Id, rebindWindow_, Path.Combine(ClientInfo.Path, "config.ini"));
         rebindWindow_.DataContext = rebindViewModel_;
         InputManager.Instance.AddRebindWindow(rebindViewModel_);
-        rebindWindow_.Show();
+        rebindViewModel_.Start();
 
         HWND rebindWindowHandle = rebindWindow_.TryGetPlatformHandle()!.Handle;
         WindowUtils.MoveWindow(rebindWindowHandle, (RECT)WindowLocation!, true);

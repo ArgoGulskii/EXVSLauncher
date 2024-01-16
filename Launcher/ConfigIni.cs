@@ -43,5 +43,6 @@ internal class ConfigIni
         section["Test"] = string.Join(",", Bindings.Test);
 
         ini.Persist();
+        Console.WriteLine($"Wrote config to {path}");
     }
 }
