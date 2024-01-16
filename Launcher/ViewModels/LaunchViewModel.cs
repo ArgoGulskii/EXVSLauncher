@@ -1,5 +1,6 @@
 ﻿using MsBox.Avalonia.Enums;
 using MsBox.Avalonia;
+using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -31,6 +32,8 @@ public partial class LaunchViewModel : ViewModelBase
     public required MainViewModel Main;
 
     public ObservableCollection<ClientLaunchViewModel> Clients { get; set; }
+
+    private Process? serverProcess_;
 
     public static Process? FindServer(string serverPath)
     {
@@ -64,7 +67,7 @@ public partial class LaunchViewModel : ViewModelBase
         }
 
         // Start the server if it's not already running.
-        var serverPath = Main.PresetsViewModel.SelectedPreset.ServerPath;
+        var serverPath = Main.PresetsViewModel.SelectedPreset!.ServerPath;
         if (serverPath == null)
         {
             var box = MessageBoxManager.GetMessageBoxStandard("Error", $"Server path not specified in preset", ButtonEnum.Ok);
@@ -72,12 +75,22 @@ public partial class LaunchViewModel : ViewModelBase
             return;
         }
 
-        if (FindServer(serverPath) == null)
+        serverProcess_ = FindServer(serverPath);
+        if (serverProcess_ == null)
         {
-            Process process = new();
-            process.StartInfo.FileName = serverPath;
-            process.StartInfo.WorkingDirectory = Path.GetDirectoryName(serverPath);
-            process.Start();
+            serverProcess_ = new();
+            serverProcess_.StartInfo.FileName = serverPath;
+            serverProcess_.StartInfo.WorkingDirectory = Path.GetDirectoryName(serverPath);
+            try
+            {
+                serverProcess_.Start();
+            }
+            catch (Exception ex)
+            {
+                var box = MessageBoxManager.GetMessageBoxStandard("Error", $"Failed to start server: {ex.Message}", ButtonEnum.Ok);
+                await box.ShowAsync();
+                return;
+            }
         }
 
         var splitIdx = 0;
@@ -119,6 +132,9 @@ public partial class LaunchViewModel : ViewModelBase
 
     public void Stop()
     {
+        serverProcess_!.Kill();
+        serverProcess_ = null;
+
         foreach (var client in Clients)
         {
             client.Kill();
