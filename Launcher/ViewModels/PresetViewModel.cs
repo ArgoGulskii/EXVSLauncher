@@ -1,5 +1,4 @@
 ﻿using ReactiveUI;
-using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
 namespace Launcher.ViewModels;

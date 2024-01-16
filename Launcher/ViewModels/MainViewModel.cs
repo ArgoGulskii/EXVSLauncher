@@ -1,8 +1,8 @@
-﻿using System.Reactive.Linq;
 using ReactiveUI;
 
 namespace Launcher.ViewModels;
 
+[JsonConverter(typeof(MainViewModelConverter))]
 public partial class MainViewModel : ViewModelBase
 {
     public MainViewModel()

@@ -1,5 +1,4 @@
-﻿using Avalonia.Data;
-using Avalonia.Media.Imaging;
+﻿using Avalonia.Media.Imaging;
 using Launcher.Input;
 using Launcher.Views.Rebind;
 using ReactiveUI;
@@ -10,7 +9,6 @@ using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Launcher.ViewModels;
 

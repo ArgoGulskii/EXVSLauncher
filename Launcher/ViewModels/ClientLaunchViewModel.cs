@@ -1,14 +1,11 @@
 ﻿using Avalonia.Threading;
 using Launcher.Input;
-using Launcher.Views;
 using Launcher.Views.Rebind;
 using ReactiveUI;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Launcher.ViewModels;
@@ -77,7 +74,8 @@ public class ClientLaunchViewModel : ViewModelBase
         try
         {
             process.Start();
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             StateText = "Failed to launch: " + ex.Message;
             return false;

@@ -1,6 +1,5 @@
 ﻿using ReactiveUI;
 using System.Reactive.Linq;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Launcher.ViewModels;
 
