@@ -15,13 +15,13 @@ class ConsoleMirror : StreamWriter
 
     public override Encoding Encoding { get { return Encoding.UTF8; } }
 
-    public override void Write(string value)
+    public override void Write(string? value)
     {
         orig.Write(value);
         base.Write(value);
     }
 
-    public override void WriteLine(string value)
+    public override void WriteLine(string? value)
     {
         orig.WriteLine(value);
         base.Write(DateTime.Now.ToString("HH:mm:ss "));
