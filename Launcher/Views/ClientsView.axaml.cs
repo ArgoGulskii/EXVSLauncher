@@ -22,14 +22,15 @@ public partial class ClientsView : UserControl
         var ctx = Context();
         if (ctx == null)
             return;
-
         ctx.Clients.Add(new ClientViewModel());
         ctx.SelectedClientIndex = ctx.Clients.Count - 1;
     }
 
     public void OnPointerPressed_Remove(object? sender, PointerPressedEventArgs e)
     {
-        var ctx = Context()!;
+        var ctx = Context();
+        if (ctx == null)
+            return;
 
         if (ctx.SelectedClientIndex < 0 || ctx.SelectedClientIndex >= ctx.Clients.Count)
             return;

@@ -7,7 +7,9 @@ using Launcher.Input;
 using Launcher.ViewModels;
 using Launcher.Views;
 using Launcher.Views.Rebind;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 
 namespace Launcher;
 
@@ -24,14 +26,17 @@ public partial class App : Application
         // Without this line you will get duplicate validations from both Avalonia and CT
         BindingPlugins.DataValidators.RemoveAt(0);
 
+        MainViewModel? mainVM = null;
 
-        var presetsVM = new PresetsViewModel();
-        var settingsVM = new SettingsViewModel();
-        var mainVM = new MainViewModel
+        if (File.Exists("launcher.json"))
         {
-            PresetsViewModel = presetsVM,
-            SettingsViewModel = settingsVM,
-        };
+            var json = File.ReadAllText("launcher.json");
+            mainVM = JsonSerializer.Deserialize<MainViewModel>(json);
+        }
+        else
+        {
+            mainVM = MainViewModel.Default();
+        }
 
         if (!Design.IsDesignMode) InputManager.Instance.Start();
 

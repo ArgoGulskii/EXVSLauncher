@@ -13,64 +13,7 @@ public partial class LaunchViewModel : ViewModelBase
 {
     public LaunchViewModel()
     {
-        Clients =
-        [
-            new ClientLaunchViewModel
-            {
-                ClientInfo = new ClientViewModel
-                {
-                    Name = "LM",
-                    Path = @"C:\GXX10JPN27\storage\lm",
-                    Hidden = true,
-                    Enabled = true,
-                    AutoRebind = false,
-                },
-            },
-            new ClientLaunchViewModel
-            {
-                ClientInfo = new ClientViewModel
-                {
-                    Name = "PCB 1",
-                    Path = @"C:\GXX10JPN27\storage\pcb1",
-                    Hidden = false,
-                    Enabled = true,
-                    AutoRebind = true,
-                },
-            },
-            new ClientLaunchViewModel
-            {
-                ClientInfo = new ClientViewModel
-                {
-                    Name = "PCB 2",
-                    Path = @"C:\GXX10JPN27\storage\pcb2",
-                    Hidden = false,
-                    Enabled = true,
-                    AutoRebind = true,
-                },
-            },
-            new ClientLaunchViewModel
-            {
-                ClientInfo = new ClientViewModel
-                {
-                    Name = "PCB 3",
-                    Path = @"C:\GXX10JPN27\storage\pcb3",
-                    Hidden = false,
-                    Enabled = true,
-                    AutoRebind = true,
-                },
-            },
-            new ClientLaunchViewModel
-            {
-                ClientInfo = new ClientViewModel
-                {
-                    Name = "PCB 4",
-                    Path = @"C:\GXX10JPN27\storage\pcb4",
-                    Hidden = false,
-                    Enabled = true,
-                    AutoRebind = true,
-                },
-            },
-        ];
+        Clients = [];
     }
 
     public static LaunchViewModel FromClients(MainViewModel main)

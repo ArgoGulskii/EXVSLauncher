@@ -1,107 +1,20 @@
 ﻿using ReactiveUI;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Launcher.ViewModels;
 
+[JsonConverter(typeof(PresetsViewModelConverter))]
 public partial class PresetsViewModel : ViewModelBase
 {
     public PresetsViewModel()
     {
-        Presets = new ObservableCollection<PresetViewModel>
-        {
-            new PresetViewModel {
-                Name = "Multibox",
-                GamePath = "C:\\GXX10JPN27\\vsac25_Release.exe",
-                ServerPath = "C:\\GXX10JPN27\\Server\\server.exe",
-                Clients = new ClientsViewModel
-                {
-                    Clients = new ObservableCollection<ClientViewModel>
-                    {
-                        new ClientViewModel
-                        {
-                            Name = "LM",
-                            Path = @"C:\GXX10JPN27\storage\lm",
-                            Hidden = true,
-                            Enabled = true,
-                            AutoRebind = false,
-                            Mode = 1,
-                            NetworkMode = 1,
-                            NetworkValue = "10.10.220.5"
-                        },
-                        new ClientViewModel
-                        {
-                            Name = "PCB 1",
-                            Path = @"C:\GXX10JPN27\storage\pcb1",
-                            Hidden = false,
-                            Enabled = true,
-                            AutoRebind = true,
-                            Mode = 0,
-                            NetworkMode = 1,
-                            NetworkValue = "10.10.220.1"
-                        },
-                        new ClientViewModel
-                        {
-                            Name = "PCB 2",
-                            Path = @"C:\GXX10JPN27\storage\pcb2",
-                            Hidden = false,
-                            Enabled = true,
-                            AutoRebind = true,
-                            Mode = 0,
-                            NetworkMode = 1,
-                            NetworkValue = "10.10.220.2"
-                        },
-                        new ClientViewModel
-                        {
-                            Name = "PCB 3",
-                            Path = @"C:\GXX10JPN27\storage\pcb3",
-                            Hidden = false,
-                            Enabled = true,
-                            AutoRebind = true,
-                            Mode = 0,
-                            NetworkMode = 1,
-                            NetworkValue = "10.10.220.3"
-                        },
-                        new ClientViewModel
-                        {
-                            Name = "PCB 4",
-                            Path = @"C:\GXX10JPN27\storage\pcb4",
-                            Hidden = false,
-                            Enabled = true,
-                            AutoRebind = true,
-                            Mode = 0,
-                            NetworkMode = 1,
-                            NetworkValue = "10.10.220.4"
-                        },
-                    },
-                },
-            },
-            new PresetViewModel
-            {
-                Name = "Radmin Client",
-                GamePath = "C:\\GXX10JPN27\\vsac25_Release.exe",
-                ServerPath = "C:\\GXX10JPN27\\Server\\server.exe",
-                Clients = new ClientsViewModel
-                {
-                    Clients = new ObservableCollection<ClientViewModel>
-                    {
-                        new ClientViewModel
-                        {
-                            Name = "Radmin Client",
-                            Path = @"C:\GXX10JPN27\storage\radmin",
-                            Hidden = false,
-                            Enabled = true,
-                            AutoRebind = false,
-                            Mode = 0,
-                            NetworkMode = 0,
-                            NetworkValue = "Radmin VPN"
-                        },
-                    },
-                },
-            },
-        };
-
+        Presets = new ObservableCollection<PresetViewModel>();
+        selectedPresetIndex_ = -1;
         selectedPreset = this
             .WhenAnyValue(x => x.SelectedPresetIndex)
             .Select(idx => Presets.ElementAtOrDefault(idx))
@@ -119,4 +32,44 @@ public partial class PresetsViewModel : ViewModelBase
 
     readonly ObservableAsPropertyHelper<PresetViewModel?> selectedPreset;
     public PresetViewModel? SelectedPreset => selectedPreset.Value;
+}
+
+class PresetsViewModelConverter : JsonConverter<PresetsViewModel>
+{
+    public override PresetsViewModel Read(
+         ref Utf8JsonReader reader,
+         Type typeToConvert,
+         JsonSerializerOptions options)
+    {
+        PresetsViewModel result = new();
+
+        if (reader.TokenType != JsonTokenType.StartArray)
+        {
+            throw new JsonException();
+        }
+
+        reader.Read();
+
+        while (reader.TokenType != JsonTokenType.EndArray)
+        {
+            result.Presets.Add(JsonSerializer.Deserialize<PresetViewModel>(ref reader, options)!);
+            reader.Read();
+        }
+        return result;
+    }
+
+    public override void Write(
+        Utf8JsonWriter writer,
+        PresetsViewModel pvm,
+        JsonSerializerOptions options)
+    {
+        writer.WriteStartArray();
+
+        foreach (var preset in pvm.Presets)
+        {
+            JsonSerializer.Serialize(writer, preset, options);
+        }
+
+        writer.WriteEndArray();
+    }
 }
