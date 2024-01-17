@@ -31,19 +31,27 @@
 
                                 <ItemsPresenter Name="PART_ItemsPresenter"
                                                 ItemsPanel="{TemplateBinding ItemsPanel}"/>
-                                <TabStrip Grid.Column="1">
+                                <TabStrip SelectionChanged="SelectionChanged" Grid.Column="1">
                                     <TabStrip.Resources>
                                         <Thickness x:Key="TabItemHeaderMargin">3, 0</Thickness>
                                         <Thickness x:Key="TabStripItemPipeThickness">0</Thickness>
                                     </TabStrip.Resources>
+
+                                    <!-- Placeholder as an awful hack to reuse TabStrip as buttons-->
                                     <TabItem>
                                         <TabItem.Header>
-                                            <Label PointerPressed="OnPointerPressed_Add">Add</Label>
+                                            <Label/>
+                                        </TabItem.Header>
+                                    </TabItem>
+
+                                    <TabItem>
+                                        <TabItem.Header>
+                                            <Label>Add</Label>
                                         </TabItem.Header>
                                     </TabItem>
                                     <TabItem>
                                         <TabItem.Header>
-                                            <Label PointerPressed="OnPointerPressed_Remove">Remove</Label>
+                                            <Label>Remove</Label>
                                         </TabItem.Header>
                                     </TabItem>
                                 </TabStrip>
