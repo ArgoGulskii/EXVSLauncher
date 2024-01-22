@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Launcher.Output;
 
 namespace Launcher.ViewModels;
 
@@ -57,9 +58,8 @@ public partial class LaunchViewModel : ViewModelBase
             if (client.ClientInfo.Enabled && !client.ClientInfo.Hidden) ++visibleCount;
         }
 
-        var displays = DisplayUtils.EnumerateDisplays();
-        var splits = DisplayUtils.CalculateWindowLocations(displays, visibleCount);
-        if (splits == null)
+        var assignments = Main.SettingsViewModel.Rows;
+        if (assignments.Count < visibleCount)
         {
             var box = MessageBoxManager.GetMessageBoxStandard("Error", $"Failed to launch, not enough places to place game windows (need {visibleCount})", ButtonEnum.Ok);
             await box.ShowAsync();
@@ -93,17 +93,18 @@ public partial class LaunchViewModel : ViewModelBase
             }
         }
 
-        var splitIdx = 0;
+        var outputIdx = 0;
         foreach (var client in Clients)
         {
             if (client.ClientInfo.Enabled && !client.ClientInfo.Hidden)
             {
-                client.ClientInfo.Id = splitIdx + 1;
-                client.WindowLocation = splits[splitIdx++];
+                client.ClientInfo.Id = outputIdx + 1;
+                client.Output = assignments[outputIdx];
+                ++outputIdx;
             }
             else
             {
-                client.WindowLocation = null;
+                client.Output = null;
             }
         }
 

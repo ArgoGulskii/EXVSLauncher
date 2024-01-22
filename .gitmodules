@@ -1,0 +1,3 @@
+[submodule "libs/WindowsDisplayAPI"]
+	path = libs/WindowsDisplayAPI
+	url = https://github.com/falahati/WindowsDisplayAPI.git

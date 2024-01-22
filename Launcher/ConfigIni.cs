@@ -16,6 +16,8 @@ internal class ConfigIni
     public string? ControllerPath;
     public InputBindings Bindings;
 
+    public string? AudioId;
+
     public void Write(string path)
     {
         var ini = new INIFile(path);
@@ -41,6 +43,20 @@ internal class ConfigIni
         section["Start"] = string.Join(",", Bindings.Start);
         section["Card"] = string.Join(",", Bindings.Card);
         section["Test"] = string.Join(",", Bindings.Test);
+
+
+        if (!ini.HasSection("audio"))
+            ini.AddSection("audio");
+
+        var audio = ini.GetSection("audio");
+        if (AudioId != null)
+        {
+            audio["Id"] = AudioId;
+        }
+        else
+        {
+            audio.Remove("Id");
+        }
 
         ini.Persist();
         Console.WriteLine($"Wrote config to {path}");

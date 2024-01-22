@@ -46,8 +46,14 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="DialogHost.Avalonia" Version="0.7.7" />
+        <PackageReference Include="Material.Icons.Avalonia" Version="2.1.0" />
         <PackageReference Include="MessageBox.Avalonia" Version="3.1.5.1" />
+        <PackageReference Include="NAudio" Version="2.2.1" />
         <PackageReference Include="PeanutButter.INI" Version="3.0.228" />
         <PackageReference Include="RawInput.Sharp" Version="0.1.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\libs\WindowsDisplayAPI\WindowsDisplayAPI\WindowsDisplayAPI.csproj" />
     </ItemGroup>
 </Project>

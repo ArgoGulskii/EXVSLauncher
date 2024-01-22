@@ -1,0 +1,69 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:output="clr-namespace:Launcher.Output"
+        xmlns:vm="clr-namespace:Launcher.ViewModels"
+        xmlns:rebind="clr-namespace:Launcher.Views.Rebind"
+        mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+        x:Class="Launcher.Views.PreviewWindow"
+        x:DataType="output:OutputAssignment"
+        Title="Preview Window"
+        Background="Transparent"
+        TransparencyLevelHint="AcrylicBlur"
+        PointerPressed="Click">
+    <Window.Styles>
+        <Style Selector="StackPanel">
+            <Setter Property="Width" Value="720"/>
+            <Setter Property="Orientation" Value="Horizontal"/>
+        </Style>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="Height" Value="36"/>
+        </Style>
+    </Window.Styles>
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="1"
+                    MaterialOpacity="0.65" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Stretch">
+            <Grid.RowDefinitions>
+                <!-- Fill -->
+                <RowDefinition Height="*"/>
+
+                <!-- Header image -->
+                <RowDefinition Height="auto"/>
+
+                <!-- Spacer -->
+                <RowDefinition Height="*"/>
+
+                <!-- Message -->
+                <RowDefinition Height="576"/>
+
+                <!-- Fill -->
+                <RowDefinition Height="2*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0"/>
+
+            <Image MaxWidth="550" Source="{Binding HeaderBitmap}" Grid.Row="1"/>
+
+            <StackPanel Grid.Row="2"/>
+
+            <StackPanel Width="1280" Grid.Row="3" Orientation="Vertical" VerticalAlignment="Center">
+                <TextBlock Width="1280" FontSize="48" Height="60" TextAlignment="Center" Text="{Binding DisplayName}"/>
+                <TextBlock Width="1280" FontSize="48" Height="60" TextAlignment="Center" Text="{Binding AudioName}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="4">
+            </StackPanel>
+        </Grid>
+    </Panel>
+</Window>

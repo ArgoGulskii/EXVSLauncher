@@ -1,6 +1,8 @@
 ﻿using Avalonia.Threading;
 using Launcher.Input;
+using Launcher.Output;
 using Launcher.Views.Rebind;
+using Microsoft.VisualBasic.Devices;
 using ReactiveUI;
 using System;
 using System.Diagnostics;
@@ -28,6 +30,8 @@ public class ClientLaunchViewModel : ViewModelBase
     public bool Visible => ClientInfo.Enabled && !ClientInfo.Hidden;
     public bool AutoRebind => ClientInfo.AutoRebind;
 
+    public string ConfigPath => Path.Combine(ClientInfo.Path, "config.ini");
+
     private string stateText_ = "Launching";
     public string StateText
     {
@@ -40,7 +44,7 @@ public class ClientLaunchViewModel : ViewModelBase
 
     private RebindWindow? rebindWindow_;
 
-    public RECT? WindowLocation { get; set; }
+    public OutputAssignment? Output { get; set; }
 
     public static ClientLaunchViewModel FromClient(ClientViewModel cvm)
     {
@@ -59,7 +63,13 @@ public class ClientLaunchViewModel : ViewModelBase
     {
         if (!ClientInfo.Enabled) return true;
 
-        // TODO: Write the config file.
+        // TODO: Add the other config options
+        var config = new ConfigIni()
+        {
+            ControllerEnabled = false,
+            AudioId = Output == null ? null : Output.Audio.DevicePath,
+        };
+        config.Write(ConfigPath);
 
         var gamePath = ClientInfo.GamePath ?? "";
         if (gamePath == "") gamePath = mvm.PresetsViewModel.SelectedPreset!.GamePath;
@@ -118,13 +128,12 @@ public class ClientLaunchViewModel : ViewModelBase
     public void StartRebind()
     {
         rebindWindow_ = new RebindWindow();
-        RebindViewModel rebindViewModel_ = new(ClientInfo.Id, rebindWindow_, Path.Combine(ClientInfo.Path, "config.ini"));
+        RebindViewModel rebindViewModel_ = new(ClientInfo.Id, rebindWindow_, ConfigPath);
         rebindWindow_.DataContext = rebindViewModel_;
         InputManager.Instance.AddRebindWindow(rebindViewModel_);
         rebindViewModel_.Start();
 
-        HWND rebindWindowHandle = rebindWindow_.TryGetPlatformHandle()!.Handle;
-        WindowUtils.MoveWindow(rebindWindowHandle, (RECT)WindowLocation!, true);
+        Output!.Display.MoveWindow(rebindWindow_, true);
     }
 
     public async Task<HWND> WaitForWindow()
@@ -147,9 +156,9 @@ public class ClientLaunchViewModel : ViewModelBase
 
     public void MoveGameWindow()
     {
-        if (WindowLocation != null)
+        if (Output != null)
         {
-            WindowUtils.MoveWindow(window_, (RECT)WindowLocation, false);
+            Output.Display.MoveWindow(window_, false);
         }
         else
         {

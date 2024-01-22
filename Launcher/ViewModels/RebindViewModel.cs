@@ -1,11 +1,10 @@
-﻿using Avalonia.Media.Imaging;
-using Launcher.Input;
+﻿using Launcher.Input;
 using Launcher.Views.Rebind;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
+using System.Drawing;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reflection;
@@ -599,15 +598,5 @@ public partial class RebindViewModel : ViewModelBase
     private readonly string configPath_;
     private string? controllerPath_;
 
-    private static Bitmap? GetHeaderImage()
-    {
-        var imagePath = Path.Join(System.AppContext.BaseDirectory, "header.png");
-        if (Path.Exists(imagePath))
-        {
-            return new Bitmap(imagePath);
-        }
-        return null;
-    }
-
-    public Bitmap? HeaderBitmap { get; } = GetHeaderImage();
+    public Bitmap? HeaderBitmap { get; } = HeaderImage.Get();
 }
