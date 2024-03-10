@@ -141,7 +141,16 @@ public partial class LaunchViewModel : ViewModelBase
 
     public void Stop()
     {
-        serverProcess_!.Kill();
+        try
+        {
+            if (serverProcess_ != null)
+                serverProcess_.Kill();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to kill server process: {ex.Message}");
+        }
+
         serverProcess_ = null;
 
         foreach (var client in Clients)
