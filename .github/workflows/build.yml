@@ -1,0 +1,23 @@
+name: dotnet package
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup .NET 8.x
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - run: dotnet publish Launcher -p:TargetFramework=net8.0-windows --self-contained false
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: Launcher
+          path: Launcher/bin/Release/net8.0-windows/win-x64/publish/Launcher.exe

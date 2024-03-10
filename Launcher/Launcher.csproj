@@ -6,6 +6,7 @@
         <TargetFramework>net8.0-windows</TargetFramework>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <OutputType>WinExe</OutputType>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
         <StartupObject>Launcher.Desktop.Program</StartupObject>
 
         <!-- WPF is only used to create a dummy window for rawinput events -->
