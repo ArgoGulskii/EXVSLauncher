@@ -31,24 +31,29 @@ public partial class SettingsViewModel : ViewModelBase
 
     public void UpdateRows()
     {
+        Console.WriteLine($"UpdateRows: count = {Rows.Count}");
         if (Rows.Count == 0) return;
-        if (Rows.Count == 1)
+        else if (Rows.Count == 1)
         {
-            Rows[0].IsFirst = false;
-            Rows[0].IsLast = false;
+            Rows[0].IsFirst = true;
+            Rows[0].IsLast = true;
             return;
         }
-
-        for (int i = 1; i < Rows.Count - 1; ++i)
+        else
         {
-            Rows[i].IsFirst = false;
-            Rows[i].IsLast = false;
+            for (int i = 1; i < Rows.Count - 1; ++i)
+            {
+                Rows[i].IsFirst = false;
+                Rows[i].IsLast = false;
+            }
+
+            Rows[0].IsFirst = true;
+            Rows[0].IsLast = false;
+            Rows[Rows.Count - 1].IsFirst = false;
+            Rows[Rows.Count - 1].IsLast = true;
         }
 
-        Rows[0].IsFirst = true;
-        Rows[0].IsLast = false;
-        Rows[Rows.Count - 1].IsFirst = false;
-        Rows[Rows.Count - 1].IsLast = true;
+        this.RaisePropertyChanged("Rows");
     }
 
     public void RowAdd()
@@ -176,8 +181,6 @@ class SettingsViewModelConverter : JsonConverter<SettingsViewModel>
             }
         }
 
-        Console.WriteLine($"Row: display id = {displayId}, splitX = {displaySplitX}, splitY = {displaySplitY}; audio id = {audioId}");
-
         // Validate the row.
         var displayOutputs = DisplayOutput.EnumerateDisplays();
         var audioOutputs = AudioOutput.EnumerateOutputs();
@@ -281,8 +284,8 @@ class SettingsViewModelConverter : JsonConverter<SettingsViewModel>
                 default:
                     throw new JsonException($"Unknown property in SettingsViewModel: {propertyName}");
             }
-
         }
+        result.UpdateRows();
         return result;
     }
 
