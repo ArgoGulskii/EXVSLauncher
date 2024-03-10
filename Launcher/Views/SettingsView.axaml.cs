@@ -44,10 +44,7 @@ public partial class SettingsView : UserControl
     {
         var button = (Button)sender!;
 
-        foreach (var output in Context().Rows)
-        {
-            output.StopPreview();
-        }
+        Context()!.StopPreviews();
 
         var previewedOutput = (OutputAssignment)button.DataContext!;
         previewedOutput.StartPreview();

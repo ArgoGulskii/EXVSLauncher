@@ -18,6 +18,6 @@ public partial class PreviewWindow : Window
 
     public void Click(object? sender, PointerPressedEventArgs args)
     {
-        Context().StopPreview();
+        Context()!.StopPreview();
     }
 }

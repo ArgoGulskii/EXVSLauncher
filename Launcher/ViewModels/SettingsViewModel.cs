@@ -21,6 +21,14 @@ public partial class SettingsViewModel : ViewModelBase
         Rows = new();
     }
 
+    public void StopPreviews()
+    {
+        foreach (var output in Rows)
+        {
+            output.StopPreview();
+        }
+    }
+
     public void UpdateRows()
     {
         if (Rows.Count == 0) return;

@@ -52,6 +52,8 @@ public partial class LaunchViewModel : ViewModelBase
 
     public async Task Start()
     {
+        Main.SettingsViewModel.StopPreviews();
+
         int visibleCount = 0;
         foreach (var client in Clients)
         {
