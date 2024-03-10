@@ -51,12 +51,14 @@ internal class ConfigIni
         var audio = ini.GetSection("audio");
         if (AudioId != null)
         {
-            audio["Id"] = AudioId;
+            audio["Device"] = AudioId;
         }
         else
         {
-            audio.Remove("Id");
+            audio.Remove("Device");
         }
+
+        if (audio.ContainsKey("Id")) audio.Remove("Id");
 
         ini.Persist();
         Console.WriteLine($"Wrote config to {path}");
