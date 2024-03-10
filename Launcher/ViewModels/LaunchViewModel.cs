@@ -61,9 +61,15 @@ public partial class LaunchViewModel : ViewModelBase
         }
 
         var assignments = Main.SettingsViewModel.Rows;
+        for (int i = 0; i < assignments.Count; ++i)
+        {
+            var assignment = assignments[i];
+            Console.WriteLine($"Window assignment {i}: display = {assignment.Display.DropDownName}, audio = {assignment.Audio.Name}");
+        }
+
         if (assignments.Count < visibleCount)
         {
-            var box = MessageBoxManager.GetMessageBoxStandard("Error", $"Failed to launch, not enough places to place game windows (need {visibleCount})", ButtonEnum.Ok);
+            var box = MessageBoxManager.GetMessageBoxStandard("Error", $"Failed to launch, not enough places to place game windows (need {visibleCount}, have {assignments.Count})", ButtonEnum.Ok);
             await box.ShowAsync();
             return;
         }
