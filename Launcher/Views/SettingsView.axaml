@@ -12,6 +12,12 @@
         <vm:SettingsViewModel />
     </Design.DataContext>
 
+    <UserControl.Styles>
+        <Style Selector="Button:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource HoverColor}"/>
+        </Style>
+    </UserControl.Styles>
+
     <StackPanel Grid.IsSharedSizeScope="True">
         <Grid Margin="10 10 10 0">
             <Grid.ColumnDefinitions>
@@ -75,7 +81,7 @@
                         </Grid.Styles>
 
                         <Border Grid.Row="0" Grid.Column="0">
-                            <Button Width="32" Height="32" Click="RowUp" Background="#fff" IsEnabled="{Binding !IsFirst}" IsVisible="{Binding !IsFirst}">
+                            <Button Width="32" Height="32" Click="RowUp" Background="{DynamicResource BackgroundColor}" IsEnabled="{Binding !IsFirst}" IsVisible="{Binding !IsFirst}">
                                 <material:MaterialIcon
                                     Kind="ArrowUpBoldBoxOutline"
                                     Width="32"
@@ -84,7 +90,7 @@
                             </Button>
                         </Border>
                         <Border Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left">
-                            <Button Width="32" Height="32" Click="RowDown" Background="#fff"  IsEnabled="{Binding !IsLast}" IsVisible="{Binding !IsLast}">
+                            <Button Width="32" Height="32" Click="RowDown" Background="{DynamicResource BackgroundColor}"  IsEnabled="{Binding !IsLast}" IsVisible="{Binding !IsLast}">
                                 <material:MaterialIcon
                                     Kind="ArrowDownBoldBoxOutline"
                                     Width="32"
@@ -111,12 +117,12 @@
                             </ComboBox>
                         </Border>
                         <Border Grid.Row="0" Grid.Column="4">
-                            <Button Width="32" Height="32" Click="RowPreview" Background="#fff">
+                            <Button Width="32" Height="32" Click="RowPreview" Background="{DynamicResource BackgroundColor}">
                                 <material:MaterialIcon Kind="HelpBoxOutline" Height="32" Width="32"/>
                             </Button>
                         </Border>
                         <Border Grid.Row="0" Grid.Column="5">
-                            <Button Width="32" Height="32" Click="RowDelete" Background="#fff">
+                            <Button Width="32" Height="32" Click="RowDelete" Background="{DynamicResource BackgroundColor}">
                                 <material:MaterialIcon Kind="CloseBoxOutline" Height="32" Width="32"/>
                             </Button>
                         </Border>
@@ -144,7 +150,7 @@
             </Grid.Styles>
 
             <Border Grid.Row="0" Grid.Column="5">
-                <Button Width="32" Height="32" Click="RowAdd" Background="#fff">
+                <Button Width="32" Height="32" Click="RowAdd" Background="{DynamicResource BackgroundColor}">
                     <material:MaterialIcon
                         Kind="PlusBoxOutline"
                         Width="32"

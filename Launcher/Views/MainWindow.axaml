@@ -5,12 +5,26 @@
         xmlns:views="clr-namespace:Launcher.Views"
         xmlns:vm="using:Launcher.ViewModels"
         mc:Ignorable="d"
-		d:DesignWidth="800" d:DesignHeight="460"
-		Width="800" Height="460"
-		MinWidth="800" MinHeight="460"
+        d:DesignWidth="800" d:DesignHeight="460"
+        Width="800" Height="460"
+        MinWidth="800" MinHeight="460"
         x:Class="Launcher.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="Launcher">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="BackgroundColor">White</SolidColorBrush>
+                    <SolidColorBrush x:Key="HoverColor">Gray</SolidColorBrush>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="BackgroundColor">Black</SolidColorBrush>
+                    <SolidColorBrush x:Key="HoverColor">Gray</SolidColorBrush>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     <views:MainView DataContext="{Binding .}"/>
 </Window>
