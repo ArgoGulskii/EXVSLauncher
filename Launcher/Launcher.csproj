@@ -28,11 +28,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**" />
+        <AvaloniaResource Include="Assets\avalonia-logo.ico" />
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="Assets\**" />
+        <EmbeddedResource Include="Assets\newtype.wav" />
     </ItemGroup>
 
     <ItemGroup>
@@ -59,6 +59,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\libs\WindowsDisplayAPI\WindowsDisplayAPI\WindowsDisplayAPI.csproj" />
+        <ProjectReference Include="..\libs\WindowsDisplayAPI\WindowsDisplayAPI\WindowsDisplayAPI.csproj" />
     </ItemGroup>
 </Project>

@@ -10,6 +10,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
+using Avalonia.Platform;
+using System.Reflection;
+using Avalonia;
 
 namespace Launcher.Output;
 
@@ -64,15 +67,14 @@ public class OutputAssignment : ReactiveObject
         Preview.Show();
         Display.MoveWindow(Preview, true);
 
-        var sine20Seconds = new SignalGenerator()
-        {
-            Gain = 0.2,
-            Frequency = 500,
-            Type = SignalGeneratorType.Sin
-        }.Take(TimeSpan.FromSeconds(20));
+        var assembly = Assembly.GetExecutingAssembly();
+        var asset = assembly.GetManifestResourceStream("Launcher.Assets.newtype.wav");
+
+        var audioReader = new WaveFileReader(asset);
+        var audioStream = new LoopStream(WaveFormatConversionStream.CreatePcmStream(audioReader));
 
         WasapiOut audioOut = new WasapiOut(Audio.Device, AudioClientShareMode.Shared, false, 0);
-        audioOut.Init(sine20Seconds);
+        audioOut.Init(audioStream);
         audioOut.Play();
         AudioPreview = audioOut;
     }
