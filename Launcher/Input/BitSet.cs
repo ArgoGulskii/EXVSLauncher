@@ -13,7 +13,8 @@ public struct BitSet : IEnumerable<int>
     public bool this[int idx]
     {
         readonly get => (Value & 1u << idx) != 0u;
-        set {
+        set
+        {
             if (value)
             {
                 Value |= 1u << idx;
