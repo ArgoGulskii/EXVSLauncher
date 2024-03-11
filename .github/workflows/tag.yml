@@ -1,0 +1,27 @@
+name: Tag build
+on:
+  push:
+    tags-ignore:
+      - 'latest'
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - name:
+        uses: actions/download-artifact@v4
+        with:
+          name: Launcher
+
+      - uses: 'marvinpinto/action-automatic-releases@latest'
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          title: Latest build
+          files: |
+            Launcher.exe
