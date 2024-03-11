@@ -21,6 +21,10 @@
         <PublishSingleFile>true</PublishSingleFile>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <DisableFody Condition="'$(Configuration)' == 'Debug'">true</DisableFody>
+
+        <Company>EXVS2-POC</Company>
+        <Authors>Argo Gulskii</Authors>
+        <VersionPrefix>0.1.0</VersionPrefix>
     </PropertyGroup>
 
     <ItemGroup>
