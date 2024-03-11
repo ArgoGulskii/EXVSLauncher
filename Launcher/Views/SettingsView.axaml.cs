@@ -25,6 +25,11 @@ public partial class SettingsView : UserControl
 
         var rows = Context()!.Rows;
         int idx = rows.IndexOf(output);
+        if (idx == 0)
+        {
+            return;
+        }
+
         rows.Move(idx, idx - 1);
         Context()!.UpdateRows();
     }
@@ -36,6 +41,11 @@ public partial class SettingsView : UserControl
 
         var rows = Context()!.Rows;
         int idx = rows.IndexOf(output);
+        if (idx + 1 >= rows.Count)
+        {
+            return;
+        }
+
         rows.Move(idx, idx + 1);
         Context()!.UpdateRows();
     }
