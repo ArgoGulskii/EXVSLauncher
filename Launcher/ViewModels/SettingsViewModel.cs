@@ -244,7 +244,7 @@ class SettingsViewModelConverter : JsonConverter<SettingsViewModel>
         {
             if (reader.TokenType == JsonTokenType.EndObject)
             {
-                return result;
+                break;
             }
 
             if (reader.TokenType != JsonTokenType.PropertyName)
