@@ -23,6 +23,7 @@
             <RowDefinition Height="25"/>
             <RowDefinition Height="50"/>
             <RowDefinition Height="50"/>
+			<RowDefinition Height="50"/>
         </Grid.RowDefinitions>
         <Grid.Styles>
             <Style Selector="Border" >
@@ -93,5 +94,27 @@
         <Border Grid.Row="6" Grid.Column="1">
             <TextBox Text="{Binding GamePath}"/>
         </Border>
+		
+		<Border Grid.Row="7" Grid.Column="0">
+			<TextBlock Text="Server IP"/>
+		</Border>
+
+		<Grid ColumnDefinitions="180,10,40,100,10,100,*" RowDefinitions="Auto" Grid.Row="7" Grid.Column="1">
+			<Border Grid.Row="0" Grid.Column="0" Height="50">
+				<TextBox Text="{Binding ServerIP}"/>
+			</Border>
+			<Border Grid.Row="0" Grid.Column="2">
+				<TextBlock Text="Port"/>
+			</Border>
+			<Border Grid.Row="0" Grid.Column="3" Height="50">
+				<TextBox Text="{Binding ServerPort}"/>
+			</Border>
+			<Border Grid.Row="0" Grid.Column="5">
+				<TextBlock Text="Default Card"/>
+			</Border>
+			<Border Grid.Row="0" Grid.Column="6">
+				<TextBox Text="{Binding DefaultCard}"/>
+			</Border>
+		</Grid>
     </Grid>
 </UserControl>

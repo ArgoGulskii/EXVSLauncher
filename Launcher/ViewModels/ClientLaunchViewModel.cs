@@ -31,6 +31,7 @@ public class ClientLaunchViewModel : ViewModelBase
     public bool AutoRebind => ClientInfo.AutoRebind;
 
     public string ConfigPath => Path.Combine(ClientInfo.Path, "config.ini");
+    public string CardPath => Path.Combine(ClientInfo.Path, "card.ini");
 
     private string stateText_ = "Launching";
     public string StateText
@@ -128,7 +129,7 @@ public class ClientLaunchViewModel : ViewModelBase
     public void StartRebind()
     {
         rebindWindow_ = new RebindWindow();
-        RebindViewModel rebindViewModel_ = new(ClientInfo.Id, rebindWindow_, ConfigPath);
+        RebindViewModel rebindViewModel_ = new(ClientInfo.Id, rebindWindow_, ConfigPath, ClientInfo.DefaultCard, ClientInfo.ServerIP, ClientInfo.ServerPort);
         rebindWindow_.DataContext = rebindViewModel_;
         InputManager.Instance.AddRebindWindow(rebindViewModel_);
         rebindViewModel_.Start();

@@ -1,4 +1,5 @@
-﻿using Launcher.ViewModels;
+﻿using Launcher.Utils;
+using Launcher.ViewModels;
 using Linearstar.Windows.RawInput;
 using Linearstar.Windows.RawInput.Native;
 using System;

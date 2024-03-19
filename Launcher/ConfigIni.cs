@@ -64,3 +64,29 @@ internal class ConfigIni
         Console.WriteLine($"Wrote config to {path}");
     }
 }
+
+internal class CardIni
+{
+    public string CardId = "";
+    public string AccessCode = "";
+
+    public void Write(string path)
+    {
+        if (CardId == "" || AccessCode == "")
+        {
+            Console.WriteLine($"Missing card information, skipping write");
+            return;
+        }
+        var ini = new INIFile(path);
+        ini.WrapValueInQuotes = false;
+        if (!ini.HasSection("card"))
+            ini.AddSection("card");
+
+        var section = ini.GetSection("card");
+        section["accessCode"] = AccessCode;
+        section["chipId"] = CardId;
+
+        ini.Persist();
+        Console.WriteLine($"Wrote card to {path}");
+    }
+}

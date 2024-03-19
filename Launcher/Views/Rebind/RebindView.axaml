@@ -167,6 +167,21 @@
                 <!-- Save -->
                 <RowDefinition Height="36"/>
 
+				<!-- Spacer -->
+				<RowDefinition Height="72"/>
+
+				<!-- LoadCard -->
+				<RowDefinition Height="36"/>
+
+				<!-- SaveCard -->
+				<RowDefinition Height="36"/>
+				
+				<!-- Spacer -->
+				<RowDefinition Height="36"/>
+
+				<!-- RemoveCard -->
+				<RowDefinition Height="36"/>
+
                 <!-- Fill -->
                 <RowDefinition Height="2*"/>
             </Grid.RowDefinitions>
@@ -295,7 +310,30 @@
                     <TextBlock Classes="label">Save and exit</TextBlock>
                 </StackPanel>
             </Border>
-            <StackPanel Grid.Row="20"/>
+
+			<StackPanel Grid.Row="20"/>
+			
+			<Border Classes.selected="{Binding LoadCardSelected}" Grid.Row="21">
+				<StackPanel>
+					<TextBlock Classes="label">Load Player Card</TextBlock>
+					<TextBlock Classes="value" Text="{Binding CardName}"/>
+				</StackPanel>
+			</Border>
+			<Border Classes.selected="{Binding SaveCardSelected}" Grid.Row="22">
+				<StackPanel>
+					<TextBlock Classes="label">Save Player Card</TextBlock>
+					<TextBlock Classes="value" Text="{Binding CardName}"/>
+				</StackPanel>
+			</Border>
+
+			<StackPanel Grid.Row="23"/>
+			
+			<Border Classes.selected="{Binding RemoveCardSelected}" Grid.Row="24">
+				<StackPanel>
+					<TextBlock Classes="label">Remove Player Card</TextBlock>
+				</StackPanel>
+			</Border>
+            <StackPanel Grid.Row="25"/>
         </Grid>
     </Panel>
 </UserControl>

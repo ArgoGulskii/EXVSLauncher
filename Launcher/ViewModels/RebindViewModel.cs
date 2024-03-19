@@ -1,4 +1,5 @@
 ﻿using Launcher.Input;
+using Launcher.Utils;
 using Launcher.Views.Rebind;
 using ReactiveUI;
 using System;
@@ -139,15 +140,27 @@ public class RebindBindings
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public partial class RebindViewModel : ViewModelBase
 {
-    public RebindViewModel() : this(0, null!, null!)
+    public RebindViewModel() : this(0, null!, null!, "", null!, null!)
     {
+        ModalVisible = false;
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
     }
 
-    public RebindViewModel(int id, RebindWindow window, string configPath)
+    public RebindViewModel(int id, RebindWindow window, string configPath, string defaultCard, string serverIP, string serverPort)
     {
         id_ = id;
         rebindWindow_ = window;
         configPath_ = configPath;
+        defaultCard_ = defaultCard;
+        cardId_ = "";
+        accessCode_ = "";
+        serverIP_ = serverIP;
+        serverPort_ = serverPort;
+
+        CReader.SetTimeoutWithLock(5000); // Set cardreader timeout to 5 seconds.
 
         var index = this.WhenAnyValue(x => x.SelectedIndex);
         presetSelected_ = index.Select(idx => idx == 0).ToProperty(this, x => x.PresetSelected);
@@ -163,6 +176,14 @@ public partial class RebindViewModel : ViewModelBase
         cardSelected_ = index.Select(idx => idx == 10).ToProperty(this, x => x.CardSelected);
         testSelected_ = index.Select(idx => idx == 11).ToProperty(this, x => x.TestSelected);
         saveSelected_ = index.Select(idx => idx == 12).ToProperty(this, x => x.SaveSelected);
+        loadCardSelected_ = index.Select(idx => idx == 13).ToProperty(this, x => x.SaveCardSelected);
+        saveCardSelected_ = index.Select(idx => idx == 14).ToProperty(this, x => x.LoadCardSelected);
+        removeCardSelected_ = index.Select(idx => idx == 15).ToProperty(this, x => x.RemoveCardSelected);
+
+        if (defaultCard_ == "")
+        {
+            cardName_ = "DISABLED";
+        }
 
         Reset();
     }
@@ -210,6 +231,15 @@ public partial class RebindViewModel : ViewModelBase
             Bindings = Bindings.ToInputBindings(),
         };
         config.Write(configPath_);
+
+        if (defaultCard_ != "")
+        {
+            var card = new CardIni()
+            {
+                CardId = cardId_,
+                AccessCode = accessCode_,
+            };
+        }
     }
 
     private static bool HasBinding(int index)
@@ -272,6 +302,8 @@ public partial class RebindViewModel : ViewModelBase
             8 => this.GetType().GetProperty("BurstText"),
             9 => this.GetType().GetProperty("StartText"),
             10 => this.GetType().GetProperty("CardText"),
+            13 => this.GetType().GetProperty("CardName"),
+            15 => this.GetType().GetProperty("CardName"),
             _ => null,
         };
     }
@@ -400,14 +432,49 @@ public partial class RebindViewModel : ViewModelBase
             TestCard = !(input.Buttons & bindings.Card).IsEmpty();
         }
 
-        if (SelectedIndex == 12)
+
+        foreach (int button in diff.Pressed)
         {
-            foreach (int button in diff.Pressed)
+            if (Bindings.Main[button])
             {
-                if (Bindings.Main[button])
-                {
+                if (SaveSelected) // (SelectedIndex == 12)
+                    {
                     Finish();
                     break;
+                }
+
+                if (LoadCardSelected && defaultCard_ != "")
+                {
+                    string tempName = cardName_;
+                    cardName_ = "TAP CARD";
+                    CardReaderResponse response = CReader.GetUUIDWithLock();
+                    if (!response.Success) {
+                        cardName_ = tempName;
+                        break;
+                    }
+                    cardId_ = response.Uuid.ToString();
+                    CardInfo resp = HttpHelper.GetCardInfo(cardId_, serverIP_, serverPort_);
+                    cardName_ = resp.Name;
+                    accessCode_ = resp.AccessCode;
+                }
+
+                if (SaveCardSelected && defaultCard_ != "" && cardId_ != defaultCard_)
+                {
+                    if (HttpHelper.SendControllerConfig(cardId_, Bindings.ToInputBindings(), serverIP_, serverPort_))
+                    {
+                        Console.WriteLine("Saved controller config to card " + cardId_ + " [" + cardName_ + "]");
+                        cardName_ += "*";
+                    }
+                    else
+                    {
+                        Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + cardName_ + "]");
+                    }
+                }
+
+                if (RemoveCardSelected && defaultCard_ != "")
+                {
+                    cardId_ = defaultCard_;
+                    cardName_ = "-";
                 }
             }
         }
@@ -416,6 +483,8 @@ public partial class RebindViewModel : ViewModelBase
     private bool active_ = false;
     private InputState lastState_ = new();
     private int id_;
+    private string cardId_;
+    private string accessCode_;
 
     private bool modalVisible_ = true;
     public bool ModalVisible
@@ -432,8 +501,9 @@ public partial class RebindViewModel : ViewModelBase
     }
 
     public readonly RebindBindings Bindings = new();
+    private static readonly CardReader CReader = new();
 
-    private string controllerText_ = "HORI FIGHTING STICK α (0f0d:011c)";
+    private string controllerText_ = "Unknown/Missing Device"; // HORI FIGHTING STICK α (0f0d:011c)
     public string ControllerText
     {
         get => controllerText_;
@@ -597,6 +667,24 @@ public partial class RebindViewModel : ViewModelBase
     private readonly RebindWindow rebindWindow_;
     private readonly string configPath_;
     private string? controllerPath_;
+    private string defaultCard_;
+    private readonly string serverIP_;
+    private readonly string serverPort_;
+
+    readonly ObservableAsPropertyHelper<bool> loadCardSelected_;
+    public bool LoadCardSelected => cardSelected_.Value;
+
+    readonly ObservableAsPropertyHelper<bool> saveCardSelected_;
+    public bool SaveCardSelected => cardSelected_.Value;
+    private string cardName_ = "-";
+    public string CardName
+    {
+        get => cardName_;
+        set => this.RaiseAndSetIfChanged(ref cardName_, value);
+    }
+
+    readonly ObservableAsPropertyHelper<bool> removeCardSelected_;
+    public bool RemoveCardSelected => cardSelected_.Value;
 
     public Bitmap? HeaderBitmap { get; } = HeaderImage.Get();
 }

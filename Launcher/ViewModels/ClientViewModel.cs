@@ -20,6 +20,10 @@ public partial class ClientViewModel : ViewModelBase
         Enabled = true;
         AutoRebind = false;
 
+        DefaultCard = "";
+        ServerIP = "localhost";
+        ServerPort = "5000";
+
         Id = 0;
 
         headerName = this
@@ -56,6 +60,10 @@ public partial class ClientViewModel : ViewModelBase
 
     public bool Enabled { get; set; }
     public bool AutoRebind { get; set; }
+
+    public string DefaultCard { get; set; }
+    public string ServerIP { get; set; }
+    public string ServerPort { get; set; }
 
 
     // Metadata for launching, not used for configuration
@@ -120,6 +128,15 @@ class ClientViewModelConverter : JsonConverter<ClientViewModel>
                 case "autorebind":
                     result.AutoRebind = JsonSerializer.Deserialize<bool>(ref reader, options);
                     break;
+                case "defaultcard":
+                    result.DefaultCard = JsonSerializer.Deserialize<string>(ref reader, options);
+                    break;
+                case "serverip":
+                    result.ServerIP = JsonSerializer.Deserialize<string>(ref reader, options);
+                    break;
+                case "serverport":
+                    result.ServerPort = JsonSerializer.Deserialize<string>(ref reader, options);
+                    break;
                 default:
                     throw new JsonException($"Unknown property in ClientViewModel: {propertyName}");
             }
@@ -160,6 +177,15 @@ class ClientViewModelConverter : JsonConverter<ClientViewModel>
 
         writer.WritePropertyName("AutoRebind");
         JsonSerializer.Serialize(writer, mvm.AutoRebind, options);
+
+        writer.WritePropertyName("DefaultCard");
+        JsonSerializer.Serialize(writer, mvm.DefaultCard, options);
+
+        writer.WritePropertyName("ServerIP");
+        JsonSerializer.Serialize(writer, mvm.ServerIP, options);
+
+        writer.WritePropertyName("ServerPort");
+        JsonSerializer.Serialize(writer, mvm.ServerPort, options);
 
         writer.WriteEndObject();
     }
