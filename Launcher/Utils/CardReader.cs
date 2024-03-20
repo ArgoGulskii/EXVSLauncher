@@ -238,7 +238,7 @@ public class CardReader
         {
             Uuid = 0,
             Success = false,
-            Error = "error acquiring UUID, see console output",
+            Error = "failed to acquire UUID, see console output",
         };
         if (mu.WaitOne(0))
         {

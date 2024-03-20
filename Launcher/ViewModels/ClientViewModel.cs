@@ -22,7 +22,7 @@ public partial class ClientViewModel : ViewModelBase
 
         DefaultCard = "";
         ServerIP = "localhost";
-        ServerPort = "5000";
+        ServerPort = "80";
 
         Id = 0;
 
