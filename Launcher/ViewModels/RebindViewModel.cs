@@ -1,14 +1,20 @@
-﻿using Launcher.Input;
+﻿using httptest;
+using Launcher.Input;
 using Launcher.Utils;
 using Launcher.Views.Rebind;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
+using System.Xml.Linq;
 
 namespace Launcher.ViewModels;
 
@@ -156,11 +162,10 @@ public partial class RebindViewModel : ViewModelBase
         configPath_ = configPath;
         defaultCard_ = defaultCard;
         cardId_ = "";
-        accessCode_ = "";
-        serverIP_ = serverIP;
-        serverPort_ = serverPort;
+        accessCode_ = "1111";   // 1111 is just the default value we set, lol
 
         CReader.SetTimeoutWithLock(5000); // Set cardreader timeout to 5 seconds.
+        ControllerConfigHttpHelper.SetBaseClient(serverIP, serverPort);
 
         var index = this.WhenAnyValue(x => x.SelectedIndex);
         presetSelected_ = index.Select(idx => idx == 0).ToProperty(this, x => x.PresetSelected);
@@ -247,45 +252,45 @@ public partial class RebindViewModel : ViewModelBase
         return index >= 1 && index <= 10;
     }
 
-    private BitSet GetBinding(int index)
+    private BitSet GetBinding(int index, RebindBindings binds)
     {
         switch (index)
         {
-            case 1: return Bindings.Main;
-            case 2: return Bindings.Melee;
-            case 3: return Bindings.Boost;
-            case 4: return Bindings.Switch;
-            case 5: return Bindings.Sub;
-            case 6: return Bindings.SpecialShooting;
-            case 7: return Bindings.SpecialMelee;
-            case 8: return Bindings.Burst;
-            case 9: return Bindings.Start;
-            case 10: return Bindings.Card;
+            case 1: return binds.Main;
+            case 2: return binds.Melee;
+            case 3: return binds.Boost;
+            case 4: return binds.Switch;
+            case 5: return binds.Sub;
+            case 6: return binds.SpecialShooting;
+            case 7: return binds.SpecialMelee;
+            case 8: return binds.Burst;
+            case 9: return binds.Start;
+            case 10: return binds.Card;
             default: throw new InvalidOperationException($"GetBinding called on invalid row {index}"); ;
         }
     }
 
-    private void SetBinding(int index, BitSet value)
+    private void SetBinding(int index, BitSet value, RebindBindings binds)
     {
         switch (index)
         {
-            case 1: Bindings.Main = value; break;
-            case 2: Bindings.Melee = value; break;
-            case 3: Bindings.Boost = value; break;
-            case 4: Bindings.Switch = value; break;
-            case 5: Bindings.Sub = value; break;
-            case 6: Bindings.SpecialShooting = value; break;
-            case 7: Bindings.SpecialMelee = value; break;
-            case 8: Bindings.Burst = value; break;
-            case 9: Bindings.Start = value; break;
-            case 10: Bindings.Card = value; break;
+            case 1: binds.Main = value; break;
+            case 2: binds.Melee = value; break;
+            case 3: binds.Boost = value; break;
+            case 4: binds.Switch = value; break;
+            case 5: binds.Sub = value; break;
+            case 6: binds.SpecialShooting = value; break;
+            case 7: binds.SpecialMelee = value; break;
+            case 8: binds.Burst = value; break;
+            case 9: binds.Start = value; break;
+            case 10: binds.Card = value; break;
             default: throw new InvalidOperationException($"SetBinding called on invalid row {index}");
         }
     }
 
     private void ClearBinding(int index)
     {
-        if (HasBinding(index)) SetBinding(index, []);
+        if (HasBinding(index)) SetBinding(index, [], Bindings);
     }
 
     private PropertyInfo? GetBindingTextProperty(int index)
@@ -312,7 +317,7 @@ public partial class RebindViewModel : ViewModelBase
     {
         for (int i = 1; i < 11; ++i)
         {
-            var binding = GetBinding(i);
+            var binding = GetBinding(i, Bindings);
             var property = GetBindingTextProperty(i);
             property!.SetValue(this, string.Join(" ", binding));
         }
@@ -369,7 +374,7 @@ public partial class RebindViewModel : ViewModelBase
     {
         foreach (int i in mappingIndices)
         {
-            var bindings = GetBinding(i)!;
+            var bindings = GetBinding(i, Bindings)!;
             foreach (int button in buttons)
             {
                 if (bindings.Contains(button)) return true;
@@ -404,6 +409,20 @@ public partial class RebindViewModel : ViewModelBase
         var diff = lastState_.Diff(input);
         lastState_ = input;
 
+        // If waiting on card functions, reject all input except to cancel card functions.
+        if (waitingCard_)
+        {
+            foreach (int button in diff.Pressed)
+            {
+                if (Bindings.Main[button])
+                {
+                    // Set flag to cancel ongoing card operations if possible.
+                    CReader.SetCancel(id_);
+                }
+            }
+            return;
+        }
+
         if (diff.X == Direction.Negative) HandleLeft();
         if (diff.X == Direction.Positive) HandleRight();
         if (diff.Y == Direction.Negative) HandleUp();
@@ -411,13 +430,13 @@ public partial class RebindViewModel : ViewModelBase
 
         if (HasBinding(SelectedIndex))
         {
-            var binding = GetBinding(SelectedIndex);
+            var binding = GetBinding(SelectedIndex, Bindings);
             foreach (int button in diff.Pressed)
             {
                 Bindings.RemoveFromAll(button);
                 binding[button] = true;
             }
-            SetBinding(SelectedIndex, binding);
+            SetBinding(SelectedIndex, binding, Bindings);
             UpdateBindingText();
         }
 
@@ -445,30 +464,16 @@ public partial class RebindViewModel : ViewModelBase
 
                 if (LoadCardSelected && defaultCard_ != "")
                 {
-                    string tempName = cardName_;
-                    cardName_ = "TAP CARD";
-                    CardReaderResponse response = CReader.GetUUIDWithLock();
-                    if (!response.Success) {
-                        cardName_ = tempName;
-                        break;
-                    }
-                    cardId_ = response.Uuid.ToString();
-                    CardInfo resp = HttpHelper.GetCardInfo(cardId_, serverIP_, serverPort_);
-                    cardName_ = resp.Name;
-                    accessCode_ = resp.AccessCode;
+                    waitingCard_ = true;
+                    // Start a thread to load a smartcard; we ignore exceptions/returns from this thread.
+                    Task.Run(() => loadCard());
                 }
 
                 if (SaveCardSelected && defaultCard_ != "" && cardId_ != defaultCard_)
                 {
-                    if (HttpHelper.SendControllerConfig(cardId_, Bindings.ToInputBindings(), serverIP_, serverPort_))
-                    {
-                        Console.WriteLine("Saved controller config to card " + cardId_ + " [" + cardName_ + "]");
-                        cardName_ += "*";
-                    }
-                    else
-                    {
-                        Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + cardName_ + "]");
-                    }
+                    waitingCard_ = true;
+                    // Start a thread to save configs to a smartcard; we ignore exceptions/returns from this thread.
+                    Task.Run(() => saveCard());
                 }
 
                 if (RemoveCardSelected && defaultCard_ != "")
@@ -480,11 +485,149 @@ public partial class RebindViewModel : ViewModelBase
         }
     }
 
+    private RebindBindings ControllerConfigToRebindBindings(ControllerConfig cc)
+    {
+        RebindBindings rb = new();
+        // A Key
+        var binding = GetBinding(1, rb);
+        foreach (int button in cc.AKey)
+        {
+            binding[button] = true;
+        }
+        SetBinding(1, binding, rb);
+
+        // B Key
+        binding = GetBinding(2, rb);
+        foreach (int button in cc.BKey)
+        {
+            binding[button] = true;
+        }
+        SetBinding(2, binding, rb);
+
+        // C Key
+        binding = GetBinding(3, rb);
+        foreach (int button in cc.CKey)
+        {
+            binding[button] = true;
+        }
+        SetBinding(3, binding, rb);
+
+        // D Key
+        binding = GetBinding(4, rb);
+        foreach (int button in cc.DKey)
+        {
+            binding[button] = true;
+        }
+        SetBinding(4, binding, rb);
+
+        // Start Key
+        binding = GetBinding(9, rb);
+        foreach (int button in cc.StartKey)
+        {
+            binding[button] = true;
+        }
+        SetBinding(9, binding, rb);
+
+        // Card Key
+        binding = GetBinding(10, rb);
+        foreach (int button in cc.CardKey)
+        {
+            binding[button] = true;
+        }
+        SetBinding(10, binding, rb);
+
+        return rb;
+    }
+
+    private ControllerConfig RebindBindingsToControllerConfig(RebindBindings rb)
+    {
+        ControllerConfig cc = new();
+        // A Key
+        var binding = GetBinding(1, rb);
+        cc.AKey = binding.ToArray<int>();
+        // B Key
+        binding = GetBinding(2, rb);
+        cc.BKey = binding.ToArray<int>();
+        // C Key
+        binding = GetBinding(3, rb);
+        cc.CKey = binding.ToArray<int>();
+        // D Key
+        binding = GetBinding(4, rb);
+        cc.DKey = binding.ToArray<int>();
+        // Start Key
+        binding = GetBinding(9, rb);
+        cc.StartKey = binding.ToArray<int>();
+        // Card Key
+        binding = GetBinding(10, rb);
+        cc.CardKey = binding.ToArray<int>();
+
+        return cc;
+    }
+
+    // All of the card related functions (load/saveCard) need to be run async
+    private async Task loadCard()
+    {
+        string tempName = cardName_;
+        cardName_ = "TAP CARD";
+        CardReaderResponse response = CReader.GetUUIDWithLockAndID(id_);
+
+        // If the given card isn't registered, restore the previous card text and cancel card operations.
+        if (!response.Success)
+        {
+            cardName_ = tempName;
+            waitingCard_ = false;
+            return;
+        }
+
+        // If the card is registered, change the card name to the player's name, regardless of whether there's a saved controller config.
+        cardId_ = response.Uuid.ToString();
+        CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfo(cardId_);
+        cardName_ = ci.Value.Name;
+
+        ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfig(cardId_);
+        if (cc.HasValue)
+        {
+            RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
+            cardBindings.Name = "Custom (Player Card)";
+            Bindings.Assign(cardBindings);
+            UpdateBindingText();
+        }
+
+        waitingCard_ = false;
+    }
+    private async Task saveCard()
+    {
+        // Attempt to save the user's current button layout to the card.
+        bool success = await ControllerConfigHttpHelper.SendControllerConfig(cardId_, RebindBindingsToControllerConfig(Bindings));
+
+        // If successful, briefly show "SAVED" to indicate a successful save, otherwise show "ERROR".
+        if (success)
+        {
+            Console.WriteLine("Saved controller config to card " + cardId_ + " [" + cardName_ + "]");
+            var tempName = cardName_;
+            cardName_ = "SAVED";
+            Thread.Sleep(50);
+            cardName_ = tempName;
+        }
+        else
+        {
+            Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + cardName_ + "]");
+            var tempName = cardName_;
+            cardName_ = "ERROR";
+            Thread.Sleep(50);
+            cardName_ = tempName;
+        }
+
+        waitingCard_ = false;
+    }
+
     private bool active_ = false;
     private InputState lastState_ = new();
     private int id_;
     private string cardId_;
     private string accessCode_;
+
+    private bool waitingCard_ = false;
 
     private bool modalVisible_ = true;
     public bool ModalVisible
@@ -502,6 +645,7 @@ public partial class RebindViewModel : ViewModelBase
 
     public readonly RebindBindings Bindings = new();
     private static readonly CardReader CReader = new();
+    private static ControllerConfigHttpHelper ControllerConfigHttpHelper = new();
 
     private string controllerText_ = "Unknown/Missing Device"; // HORI FIGHTING STICK α (0f0d:011c)
     public string ControllerText
@@ -668,8 +812,6 @@ public partial class RebindViewModel : ViewModelBase
     private readonly string configPath_;
     private string? controllerPath_;
     private string defaultCard_;
-    private readonly string serverIP_;
-    private readonly string serverPort_;
 
     readonly ObservableAsPropertyHelper<bool> loadCardSelected_;
     public bool LoadCardSelected => cardSelected_.Value;

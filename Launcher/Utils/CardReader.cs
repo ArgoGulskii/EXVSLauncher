@@ -156,6 +156,8 @@ public class CardReader
     private ulong timeout;          // Timeout for polling for cardreader state changes in milliseconds; 0 is instant return.
 
     private Mutex mu = new Mutex();  // Mutex for preventing multiple users from accessing card reader at the same time
+    private bool cancel = false;     // Boolean to cancel waiting on card reader scan
+    private int currUser = -1;
 
     // Constructor
     public CardReader()
@@ -173,6 +175,19 @@ public class CardReader
         Reset();
     }
 
+    public void SetCancel(int id)
+    {
+        if (id == currUser)
+        {
+            Console.WriteLine("Cancelling card reader operations.");
+            cancel = true;
+        }
+        else
+        {
+            Console.WriteLine("Cannot cancel card operations, incorrect user.");
+        }
+    }
+
     // Setter method for timeout duration
     public void SetTimeout(ulong newTimeout)
     {
@@ -180,29 +195,38 @@ public class CardReader
     }
 
     // Lock wrapper around timeout setter
-    public void SetTimeoutWithLock(ulong newTimeout)
+    public bool SetTimeoutWithLock(ulong newTimeout)
     {
         // Skip setting timeout if it's unchanged.
         if (timeout == newTimeout)
         {
-            return;
+            return false;
         }
 
         if (mu.WaitOne(0))
         {
             SetTimeout(newTimeout);
             mu.ReleaseMutex();
+            return true;
         }
+        return false;
     }
 
     // Method to initially connect to a cardreader
     public void ConnectReader()
     {
+        if (hContext != IntPtr.Zero)
+        {
+            Console.WriteLine("CardReader already established, skipping connection setup.");
+            return;
+        }
+
         // Establish context
         int ret = SCardEstablishContext(SCARD_SCOPE_SYSTEM, IntPtr.Zero, IntPtr.Zero, out hContext);
         if (ret != SCARD_S_SUCCESS)
         {
             Console.WriteLine("Failed to establish context. Error: " + (SCardErrors)ret);
+            hContext = IntPtr.Zero;
             return;
         }
 
@@ -213,6 +237,7 @@ public class CardReader
         if (ret != SCARD_S_SUCCESS)
         {
             Console.WriteLine("Failed to list readers. Error: " + (SCardErrors)ret);
+            hContext = IntPtr.Zero;
             return;
         }
 
@@ -223,6 +248,7 @@ public class CardReader
         if (readers.Length == 0)
         {
             Console.WriteLine("No card readers available.");
+            hContext = IntPtr.Zero;
             return;
         }
 
@@ -232,7 +258,7 @@ public class CardReader
     }
 
     // Lock wrapper around GetUUID(); returns a struct with success/failure state
-    public CardReaderResponse GetUUIDWithLock()
+    public CardReaderResponse GetUUIDWithLockAndID(int id)
     {
         var response = new CardReaderResponse()
         {
@@ -242,10 +268,14 @@ public class CardReader
         };
         if (mu.WaitOne(0))
         {
+            // Set the current user to the given ID; this is the user that is allowed to cancel card operations.
+            currUser = id;
             response.Uuid = GetUUID();
             if (response.Uuid > 0) {
                 response.Success = true;
             }
+            // Reset the current user to -1, which doesn't match any ID.
+            currUser = -1;
             mu.ReleaseMutex();
         }
         else
@@ -288,6 +318,12 @@ public class CardReader
         var startTime = DateTime.UtcNow;
         while (DateTime.UtcNow - startTime < TimeSpan.FromMilliseconds(timeout))
         {
+            if (cancel)
+            {
+                Console.WriteLine("Card read cancelled.");
+                cancel = false;
+                return 0;
+            }
             ret = SCardGetStatusChangeW(hContext, 0, readerState, 1);
 
             if (ret != SCARD_S_SUCCESS)
