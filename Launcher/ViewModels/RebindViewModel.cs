@@ -169,7 +169,8 @@ public partial class RebindViewModel : ViewModelBase
         configPath_ = configPath;
         cardPath_ = cardPath;
         defaultCard_ = defaultCard;
-        cardId_ = "";
+        cardId_ = defaultCard;
+        cardName_ = "-";
         accessCode_ = "1111";   // 1111 is just the default value we set, lol
 
         CReader.ConnectReader(); // Connect to a cardreader. This will only run once.
@@ -221,6 +222,10 @@ public partial class RebindViewModel : ViewModelBase
     public void Start()
     {
         Console.WriteLine($"{this}: started");
+
+        cardId_ = defaultCard_;
+        cardName_ = "-";
+        accessCode_ = "1111";   // 1111 is just the default value we set, lol
 
         rebindWindow_.Show();
         var config = new ConfigIni()
@@ -495,7 +500,7 @@ public partial class RebindViewModel : ViewModelBase
                 if (RemoveCardSelected && defaultCard_ != "")
                 {
                     cardId_ = defaultCard_;
-                    cardName_ = "-";
+                    CardName = "-";
                     ChangePresets(RebindBindings.PresetPSStick);
                 }
             }
@@ -849,7 +854,7 @@ public partial class RebindViewModel : ViewModelBase
 
     readonly ObservableAsPropertyHelper<bool> saveCardSelected_;
     public bool SaveCardSelected => saveCardSelected_.Value;
-    private string cardName_ = "-";
+    private string cardName_;
     public string CardName
     {
         get => cardName_;
