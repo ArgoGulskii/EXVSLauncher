@@ -158,8 +158,25 @@ public class RebindBindings
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public partial class RebindViewModel : ViewModelBase
 {
-    public RebindViewModel() : this(0, null!, null!, "", "", null!, null!)
+    public RebindViewModel() : this(0, null!, null!, "", "", "localhost", "")
     {
+        ModalVisible = false;
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        HandleDown();
+        UpdateBindingText();
     }
 
     public RebindViewModel(int id, RebindWindow window, string configPath, string cardPath, string defaultCard, string serverIP, string serverPort)
@@ -586,7 +603,23 @@ public partial class RebindViewModel : ViewModelBase
         return cc;
     }
 
-    // All of the card related functions (load/saveCard) need to be run async
+    // All of the card related functions (load/saveCard) need to be run async. Loading the card from the cardreader specifically requires thread safety.
+    private async Task loadCardAsync()
+    {
+        if (mu.WaitOne(0))
+        {
+            await loadCard();
+            mu.ReleaseMutex();
+        }
+        else
+        {
+            var tempName = CardName;
+            CardName = "IN USE";
+            Thread.Sleep(200);
+            CardName = tempName;
+        }
+        waitingCard_ = false;
+    }
     private async Task loadCard()
     {
         string tempName = CardName;
@@ -599,16 +632,15 @@ public partial class RebindViewModel : ViewModelBase
             if (!response.Success)
             {
                 CardName = tempName;
-                waitingCard_ = false;
                 return;
             }
 
             // If the card is registered, change the card name to the player's name, regardless of whether there's a saved controller config.
             cardId_ = response.Uuid.ToString();
-            CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfo(cardId_);
+            CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfoAsync(cardId_);
             CardName = cardId_;
 
-            ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfig(cardId_);
+            ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfigAsync(cardId_);
             if (cc.HasValue)
             {
                 RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
@@ -626,13 +658,11 @@ public partial class RebindViewModel : ViewModelBase
             CardName = tempName;
             Console.WriteLine("Error during card read, likely due to card being removed mid-read. Read cancelled: " + ex.ToString());
         }
-        
-        waitingCard_ = false;
     }
     private async Task saveCard()
     {
         // Attempt to save the user's current button layout to the card.
-        bool success = await ControllerConfigHttpHelper.SendControllerConfig(cardId_, RebindBindingsToControllerConfig(Bindings));
+        bool success = await ControllerConfigHttpHelper.SendControllerConfigAsync(cardId_, RebindBindingsToControllerConfig(Bindings));
 
         // If successful, briefly show "SAVED" to indicate a successful save, otherwise show "ERROR".
         if (success)
@@ -640,7 +670,7 @@ public partial class RebindViewModel : ViewModelBase
             Console.WriteLine("Saved controller config to card " + cardId_ + " [" + CardName + "]");
             var tempName = CardName;
             CardName = "SAVED";
-            Thread.Sleep(50);
+            Thread.Sleep(200);
             CardName = tempName;
         }
         else
@@ -648,7 +678,7 @@ public partial class RebindViewModel : ViewModelBase
             Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + CardName + "]");
             var tempName = CardName;
             CardName = "ERROR";
-            Thread.Sleep(50);
+            Thread.Sleep(200);
             CardName = tempName;
         }
 
@@ -663,6 +693,7 @@ public partial class RebindViewModel : ViewModelBase
     private string accessCode_;
 
     private bool waitingCard_ = false;
+    private static Mutex mu = new Mutex();
 
     private bool modalVisible_ = true;
     public bool ModalVisible

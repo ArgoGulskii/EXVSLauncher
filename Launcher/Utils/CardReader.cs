@@ -175,11 +175,6 @@ public class CardReader
         Reset();
     }
 
-    public void ReleaseMutex()
-    {
-        mu.ReleaseMutex();
-    }
-
     public void SetCancel(int id)
     {
         if (id == currUser)
@@ -202,6 +197,7 @@ public class CardReader
     // Lock wrapper around timeout setter
     public bool SetTimeoutWithLock(ulong newTimeout)
     {
+        cancel = false;
         // Skip setting timeout if it's unchanged.
         if (timeout == newTimeout)
         {
@@ -265,6 +261,7 @@ public class CardReader
     // Lock wrapper around GetUUID(); returns a struct with success/failure state
     public CardReaderResponse GetUUIDWithLockAndID(int id)
     {
+        cancel = false;
         var response = new CardReaderResponse()
         {
             Uuid = 0,
