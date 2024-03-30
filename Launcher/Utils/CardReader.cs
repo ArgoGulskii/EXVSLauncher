@@ -175,6 +175,11 @@ public class CardReader
         Reset();
     }
 
+    public void ReleaseMutex()
+    {
+        mu.ReleaseMutex();
+    }
+
     public void SetCancel(int id)
     {
         if (id == currUser)

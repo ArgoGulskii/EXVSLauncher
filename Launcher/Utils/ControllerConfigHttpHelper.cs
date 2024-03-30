@@ -84,9 +84,12 @@ public class ControllerConfigHttpHelper
             {
                 Console.WriteLine($"profile response: '{jsonResponse}'\n");
                 var jsondict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
-                foreach (KeyValuePair<string, object> kvp in jsondict)
+                if (jsondict != null)
                 {
-                    if (kvp.Key == "userName") ci.Name = kvp.Value.ToString();
+                    foreach (KeyValuePair<string, object> kvp in jsondict)
+                    {
+                        if (kvp.Key == "userName") ci.Name = kvp.Value.ToString();
+                    }
                 }
             }
             else

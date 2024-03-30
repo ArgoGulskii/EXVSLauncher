@@ -207,7 +207,6 @@ public partial class RebindViewModel : ViewModelBase
         lastState_ = new();
 
         ChangePresets(RebindBindings.PresetPSStick);
-        UpdateBindingText();
     }
 
     public void Start()
@@ -480,6 +479,7 @@ public partial class RebindViewModel : ViewModelBase
                 {
                     cardId_ = defaultCard_;
                     cardName_ = "-";
+                    ChangePresets(RebindBindings.PresetPSStick);
                 }
             }
         }
@@ -567,32 +567,45 @@ public partial class RebindViewModel : ViewModelBase
     // All of the card related functions (load/saveCard) need to be run async
     private async Task loadCard()
     {
-        string tempName = cardName_;
-        cardName_ = "TAP CARD";
-        CardReaderResponse response = CReader.GetUUIDWithLockAndID(id_);
-
-        // If the given card isn't registered, restore the previous card text and cancel card operations.
-        if (!response.Success)
+        string tempName = CardName;
+        CardName = "TAP CARD";
+        try
         {
-            cardName_ = tempName;
-            waitingCard_ = false;
-            return;
+            CardReaderResponse response = CReader.GetUUIDWithLockAndID(id_);
+
+            // If the given card isn't registered, restore the previous card text and cancel card operations.
+            if (!response.Success)
+            {
+                CardName = tempName;
+                waitingCard_ = false;
+                return;
+            }
+
+            // If the card is registered, change the card name to the player's name, regardless of whether there's a saved controller config.
+            cardId_ = response.Uuid.ToString();
+            CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfo(cardId_);
+            CardName = cardId_;
+
+            ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfig(cardId_);
+            if (cc.HasValue)
+            {
+                RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
+                cardBindings.Name = ci.Value.Name + " (Custom)";
+                ChangePresets(cardBindings);
+            }
+            else
+            {
+                PresetText = "NO PROFILE";
+                UpdateBindingText();
+            }
         }
-
-        // If the card is registered, change the card name to the player's name, regardless of whether there's a saved controller config.
-        cardId_ = response.Uuid.ToString();
-        CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfo(cardId_);
-        cardName_ = ci.Value.Name;
-
-        ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfig(cardId_);
-        if (cc.HasValue)
+        catch (Exception ex)
         {
-            RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
-            cardBindings.Name = "Custom (Player Card)";
-            Bindings.Assign(cardBindings);
-            UpdateBindingText();
+            CardName = tempName;
+            Console.WriteLine("Error during card read, likely due to card being removed mid-read. Read cancelled: " + ex.ToString());
+            CReader.ReleaseMutex();
         }
-
+        
         waitingCard_ = false;
     }
     private async Task saveCard()
@@ -603,19 +616,19 @@ public partial class RebindViewModel : ViewModelBase
         // If successful, briefly show "SAVED" to indicate a successful save, otherwise show "ERROR".
         if (success)
         {
-            Console.WriteLine("Saved controller config to card " + cardId_ + " [" + cardName_ + "]");
-            var tempName = cardName_;
-            cardName_ = "SAVED";
+            Console.WriteLine("Saved controller config to card " + cardId_ + " [" + CardName + "]");
+            var tempName = CardName;
+            CardName = "SAVED";
             Thread.Sleep(50);
-            cardName_ = tempName;
+            CardName = tempName;
         }
         else
         {
-            Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + cardName_ + "]");
-            var tempName = cardName_;
-            cardName_ = "ERROR";
+            Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + CardName + "]");
+            var tempName = CardName;
+            CardName = "ERROR";
             Thread.Sleep(50);
-            cardName_ = tempName;
+            CardName = tempName;
         }
 
         waitingCard_ = false;
