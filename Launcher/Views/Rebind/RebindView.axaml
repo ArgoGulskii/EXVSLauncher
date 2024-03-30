@@ -322,7 +322,6 @@
 			<Border Classes.selected="{Binding SaveCardSelected}" Grid.Row="22">
 				<StackPanel>
 					<TextBlock Classes="label">Save Player Card</TextBlock>
-					<TextBlock Classes="value" Text="{Binding CardName}"/>
 				</StackPanel>
 			</Border>
 

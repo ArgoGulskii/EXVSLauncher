@@ -275,9 +275,17 @@ public class CardReader
         {
             // Set the current user to the given ID; this is the user that is allowed to cancel card operations.
             currUser = id;
-            response.Uuid = GetUUID();
-            if (response.Uuid > 0) {
-                response.Success = true;
+            try
+            {
+                response.Uuid = GetUUID();
+                if (response.Uuid > 0)
+                {
+                    response.Success = true;
+                }
+            }
+            catch (Exception e)
+            {
+                response.Error = e.ToString();
             }
             // Reset the current user to -1, which doesn't match any ID.
             currUser = -1;

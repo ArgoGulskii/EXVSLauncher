@@ -34,6 +34,9 @@ public class RebindBindings
         Start = [];
         Card = [];
         Test = [];
+        Save = [];
+        Load = [];
+        Reset = [];
     }
 
 
@@ -51,6 +54,9 @@ public class RebindBindings
         Start = other.Start;
         Card = other.Card;
         Test = other.Test;
+        Save = other.Save;
+        Load = other.Load;
+        Reset = other.Reset;
 
         Next = other.Next;
         Prev = other.Prev;
@@ -69,6 +75,9 @@ public class RebindBindings
     public BitSet Start;
     public BitSet Card;
     public BitSet Test;
+    public BitSet Save;
+    public BitSet Load;
+    public BitSet Reset;
 
     public RebindBindings? Base { get; set; }
     public RebindBindings? Next { get; set; }
@@ -104,6 +113,9 @@ public class RebindBindings
         Start[button] = false;
         Card[button] = false;
         Test[button] = false;
+        Save[button] = false;
+        Load[button] = false;
+        Reset[button] = false;
     }
 
     public readonly static RebindBindings PresetPSStick = new()
@@ -146,24 +158,21 @@ public class RebindBindings
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public partial class RebindViewModel : ViewModelBase
 {
-    public RebindViewModel() : this(0, null!, null!, "", null!, null!)
+    public RebindViewModel() : this(0, null!, null!, "", "", null!, null!)
     {
-        ModalVisible = false;
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
     }
 
-    public RebindViewModel(int id, RebindWindow window, string configPath, string defaultCard, string serverIP, string serverPort)
+    public RebindViewModel(int id, RebindWindow window, string configPath, string cardPath, string defaultCard, string serverIP, string serverPort)
     {
         id_ = id;
         rebindWindow_ = window;
         configPath_ = configPath;
+        cardPath_ = cardPath;
         defaultCard_ = defaultCard;
         cardId_ = "";
         accessCode_ = "1111";   // 1111 is just the default value we set, lol
 
+        CReader.ConnectReader(); // Connect to a cardreader. This will only run once.
         CReader.SetTimeoutWithLock(5000); // Set cardreader timeout to 5 seconds.
         ControllerConfigHttpHelper.SetBaseClient(serverIP, serverPort);
 
@@ -243,6 +252,8 @@ public partial class RebindViewModel : ViewModelBase
                 CardId = cardId_,
                 AccessCode = accessCode_,
             };
+
+            card.Write(cardPath_);
         }
     }
 
@@ -306,8 +317,11 @@ public partial class RebindViewModel : ViewModelBase
             8 => this.GetType().GetProperty("BurstText"),
             9 => this.GetType().GetProperty("StartText"),
             10 => this.GetType().GetProperty("CardText"),
+            11 => this.GetType().GetProperty("Blackhole"),
+            12 => this.GetType().GetProperty("Blackhole"),
             13 => this.GetType().GetProperty("CardName"),
-            15 => this.GetType().GetProperty("CardName"),
+            14 => this.GetType().GetProperty("Blackhole"),
+            15 => this.GetType().GetProperty("Blackhole"),
             _ => null,
         };
     }
@@ -324,14 +338,14 @@ public partial class RebindViewModel : ViewModelBase
 
     public void HandleUp()
     {
-        int i = (SelectedIndex - 1) % 13;
-        if (i < 0) i += 13;
+        int i = (SelectedIndex - 1) % 16;
+        if (i < 0) i += 16;
         SelectedIndex = i;
     }
 
     public void HandleDown()
     {
-        SelectedIndex = (SelectedIndex + 1) % 13;
+        SelectedIndex = (SelectedIndex + 1) % 16;
     }
 
     private void ChangePresets(RebindBindings selected)
@@ -409,8 +423,9 @@ public partial class RebindViewModel : ViewModelBase
         lastState_ = input;
 
         // If waiting on card functions, reject all input except to cancel card functions.
-        if (waitingCard_)
+        if (waitingCard_ && DateTime.UtcNow - cardTime > TimeSpan.FromMilliseconds(500))
         {
+            var startTime = DateTime.UtcNow;
             foreach (int button in diff.Pressed)
             {
                 if (Bindings.Main[button])
@@ -464,6 +479,7 @@ public partial class RebindViewModel : ViewModelBase
                 if (LoadCardSelected && defaultCard_ != "")
                 {
                     waitingCard_ = true;
+                    cardTime = DateTime.UtcNow;
                     // Start a thread to load a smartcard; we ignore exceptions/returns from this thread.
                     Task.Run(() => loadCard());
                 }
@@ -471,6 +487,7 @@ public partial class RebindViewModel : ViewModelBase
                 if (SaveCardSelected && defaultCard_ != "" && cardId_ != defaultCard_)
                 {
                     waitingCard_ = true;
+                    cardTime = DateTime.UtcNow;
                     // Start a thread to save configs to a smartcard; we ignore exceptions/returns from this thread.
                     Task.Run(() => saveCard());
                 }
@@ -603,7 +620,6 @@ public partial class RebindViewModel : ViewModelBase
         {
             CardName = tempName;
             Console.WriteLine("Error during card read, likely due to card being removed mid-read. Read cancelled: " + ex.ToString());
-            CReader.ReleaseMutex();
         }
         
         waitingCard_ = false;
@@ -634,6 +650,7 @@ public partial class RebindViewModel : ViewModelBase
         waitingCard_ = false;
     }
 
+    DateTime cardTime = DateTime.UtcNow;
     private bool active_ = false;
     private InputState lastState_ = new();
     private int id_;
@@ -823,14 +840,15 @@ public partial class RebindViewModel : ViewModelBase
 
     private readonly RebindWindow rebindWindow_;
     private readonly string configPath_;
+    private readonly string cardPath_;
     private string? controllerPath_;
     private string defaultCard_;
 
     readonly ObservableAsPropertyHelper<bool> loadCardSelected_;
-    public bool LoadCardSelected => cardSelected_.Value;
+    public bool LoadCardSelected => loadCardSelected_.Value;
 
     readonly ObservableAsPropertyHelper<bool> saveCardSelected_;
-    public bool SaveCardSelected => cardSelected_.Value;
+    public bool SaveCardSelected => saveCardSelected_.Value;
     private string cardName_ = "-";
     public string CardName
     {
@@ -839,7 +857,14 @@ public partial class RebindViewModel : ViewModelBase
     }
 
     readonly ObservableAsPropertyHelper<bool> removeCardSelected_;
-    public bool RemoveCardSelected => cardSelected_.Value;
+    public bool RemoveCardSelected => removeCardSelected_.Value;
 
     public Bitmap? HeaderBitmap { get; } = HeaderImage.Get();
+
+    private string blackhole_ = "";
+    public string Blackhole
+    {
+        get => blackhole_;
+        set => this.RaiseAndSetIfChanged(ref blackhole_, value);
+    }
 }

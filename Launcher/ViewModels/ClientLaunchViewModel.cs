@@ -129,7 +129,7 @@ public class ClientLaunchViewModel : ViewModelBase
     public void StartRebind()
     {
         rebindWindow_ = new RebindWindow();
-        RebindViewModel rebindViewModel_ = new(ClientInfo.Id, rebindWindow_, ConfigPath, ClientInfo.DefaultCard, ClientInfo.ServerIP, ClientInfo.ServerPort);
+        RebindViewModel rebindViewModel_ = new(ClientInfo.Id, rebindWindow_, ConfigPath, CardPath, ClientInfo.DefaultCard, ClientInfo.ServerIP, ClientInfo.ServerPort);
         rebindWindow_.DataContext = rebindViewModel_;
         InputManager.Instance.AddRebindWindow(rebindViewModel_);
         rebindViewModel_.Start();
