@@ -682,7 +682,7 @@ public partial class RebindViewModel : ViewModelBase
 
         // Sub Key
         binding = GetBinding(5, rb);
-        foreach (int button in cc.AKey)
+        foreach (int button in cc.SubKey)
         {
             binding[button] = true;
         }
@@ -690,7 +690,7 @@ public partial class RebindViewModel : ViewModelBase
 
         // Special Shooting Key
         binding = GetBinding(6, rb);
-        foreach (int button in cc.BKey)
+        foreach (int button in cc.SpecialShootingKey)
         {
             binding[button] = true;
         }
@@ -698,7 +698,7 @@ public partial class RebindViewModel : ViewModelBase
 
         // Special Melee Key
         binding = GetBinding(7, rb);
-        foreach (int button in cc.CKey)
+        foreach (int button in cc.SpecialMeleeKey)
         {
             binding[button] = true;
         }
@@ -706,7 +706,7 @@ public partial class RebindViewModel : ViewModelBase
 
         // Burst Key
         binding = GetBinding(8, rb);
-        foreach (int button in cc.DKey)
+        foreach (int button in cc.BurstKey)
         {
             binding[button] = true;
         }

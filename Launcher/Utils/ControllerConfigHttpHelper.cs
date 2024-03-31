@@ -154,8 +154,8 @@ public class ControllerConfigHttpHelper
                 jsondict.TryGetValue("cKey", out cc.CKey);
                 jsondict.TryGetValue("dKey", out cc.DKey);
                 jsondict.TryGetValue("subKey", out cc.SubKey);
-                jsondict.TryGetValue("specialshootingKey", out cc.SpecialShootingKey);
-                jsondict.TryGetValue("specialmeleeKey", out cc.SpecialMeleeKey);
+                jsondict.TryGetValue("specialShootingKey", out cc.SpecialShootingKey);
+                jsondict.TryGetValue("specialMeleeKey", out cc.SpecialMeleeKey);
                 jsondict.TryGetValue("burstKey", out cc.BurstKey);
                 jsondict.TryGetValue("startKey", out cc.StartKey);
                 jsondict.TryGetValue("cardKey", out cc.CardKey);
