@@ -579,8 +579,17 @@ public partial class RebindViewModel : ViewModelBase
                 }
                 else
                 {
-                    ChangePresets(RebindBindings.PresetPSStick);
-                    PresetText = "NO PROFILE";
+                    RebindBindings cardBindings = new()
+                    {
+                        Name = "NO PROFILE",
+                        Main = [1],
+                        Melee = [4],
+                        Boost = [6],
+                        Switch = [2],
+                        Start = [10],
+                        Card = [13],
+                    };
+                    ChangePresets(cardBindings);
                 }
             }
             else
