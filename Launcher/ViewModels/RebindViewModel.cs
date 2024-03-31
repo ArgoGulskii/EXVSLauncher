@@ -636,7 +636,7 @@ public partial class RebindViewModel : ViewModelBase
             }
 
             // If the card is registered, change the card name to the player's name, regardless of whether there's a saved controller config.
-            cardId_ = response.Uuid.ToString();
+            cardId_ = response.HexID;
             CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfoAsync(cardId_);
             CardName = cardId_;
 

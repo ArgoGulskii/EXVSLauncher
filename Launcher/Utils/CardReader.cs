@@ -16,7 +16,7 @@ namespace Launcher.Utils;
 
 public struct CardReaderResponse
 {
-    public uint Uuid;
+    public string HexID;
     public bool Success;
     public string Error;
 }
@@ -264,7 +264,7 @@ public class CardReader
         cancel = false;
         var response = new CardReaderResponse()
         {
-            Uuid = 0,
+            HexID = "",
             Success = false,
             Error = "failed to acquire UUID, see console output",
         };
@@ -274,8 +274,8 @@ public class CardReader
             currUser = id;
             try
             {
-                response.Uuid = GetUUID();
-                if (response.Uuid > 0)
+                response.HexID = GetUUID();
+                if (response.HexID != "")
                 {
                     response.Success = true;
                 }
@@ -290,7 +290,7 @@ public class CardReader
         }
         else
         {
-            response.Uuid = 0;
+            response.HexID = "";
             response.Success = false;
             response.Error = "failed to acquire mutex";
         }
@@ -300,7 +300,7 @@ public class CardReader
 
     // Method to get the UUID from a card on the connected cardreader.
     // Blocks for the given timeout duration while waiting for a card to be placed.
-    public uint GetUUID()
+    public string GetUUID()
     {
         int ret;
         uint activeProtocol;
@@ -308,7 +308,7 @@ public class CardReader
         if (hContext == IntPtr.Zero || readerName == "")
         {
             Console.WriteLine("Error: not connected to any cardreader, skipping UUID request.");
-            return 0;
+            return "";
         }
 
         // Create a readerState for our selected card reader, with our starting states set to UNAWARE.
@@ -332,14 +332,14 @@ public class CardReader
             {
                 Console.WriteLine("Card read cancelled.");
                 cancel = false;
-                return 0;
+                return "";
             }
             ret = SCardGetStatusChangeW(hContext, 0, readerState, 1);
 
             if (ret != SCARD_S_SUCCESS)
             {
                 Console.WriteLine("Failed to get status change. Error code: " + (SCardErrors)ret);
-                return 0;
+                return "";
             }
 
             if ((readerState[0].dwEventState & SCARD_STATE_PRESENT) == SCARD_STATE_PRESENT)
@@ -352,7 +352,7 @@ public class CardReader
         if ((readerState[0].dwEventState & SCARD_STATE_PRESENT) != SCARD_STATE_PRESENT)
         {
             Console.WriteLine("Timeout exceeded, no card detected.");
-            return 0;
+            return "";
         }
 
         // Log our starting state and the actual state after the change event.
@@ -367,7 +367,7 @@ public class CardReader
         if (ret != SCARD_S_SUCCESS)
         {
             Console.WriteLine("Failed to connect to the card. Error code: " + (SCardErrors)ret);
-            return 0;
+            return "";
         }
 
         Console.WriteLine("Connected to card on reader: " + readerName);
@@ -386,7 +386,7 @@ public class CardReader
         if (ret != SCARD_S_SUCCESS)
         {
             Console.WriteLine("Failed to transmit command APDU. Error code: " + (SCardErrors)ret);
-            return 0;
+            return "";
         }
 
         // Get decimal representation of UUID.
@@ -394,11 +394,15 @@ public class CardReader
         Array.Copy(response, trimmedResponse, responseLength - 2);
         string hexID = BitConverter.ToString(trimmedResponse);
         hexID = hexID.Replace("-", "");
-        uint uuid = uint.Parse(hexID, System.Globalization.NumberStyles.HexNumber);
 
         // Display response.
-        Console.WriteLine("Card UUID: " + uuid);
-        return uuid;
+        Console.WriteLine("Card UUID: " + hexID);
+        return hexID;
+    }
+
+    public static uint HexToUint(string hexID)
+    {
+        return uint.Parse(hexID, System.Globalization.NumberStyles.HexNumber);
     }
 
     public void Reset()
