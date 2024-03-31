@@ -179,12 +179,12 @@ public class CardReader
     {
         if (id == currUser)
         {
-            Console.WriteLine("Cancelling card reader operations.");
+            Console.WriteLine("Cancelling card reader operations. (User: " + id + ")");
             cancel = true;
         }
         else
         {
-            Console.WriteLine("Cannot cancel card operations, incorrect user.");
+            Console.WriteLine("Cannot cancel card operations, incorrect user. (User: " + id + ", Expected: " + currUser + ")");
         }
     }
 
@@ -374,7 +374,7 @@ public class CardReader
 
         // Send command APDU.
         byte[] commandAPDU = {
-                0xff,   // CLA - the instruction class
+                0xFF,   // CLA - the instruction class
                 0xCA,   // INS - the instruction code
                 0x00,   // P1 - 1st parameter to the instruction
                 0x00,   // P2 - 2nd parameter to the instruction

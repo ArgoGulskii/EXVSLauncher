@@ -217,15 +217,15 @@ public partial class RebindViewModel : ViewModelBase
         lastState_ = new();
 
         ChangePresets(RebindBindings.PresetPSStick);
+
+        cardId_ = defaultCard_;
+        CardName = "-";
+        accessCode_ = "1111";   // 1111 is just the default value we set, lol
     }
 
     public void Start()
     {
         Console.WriteLine($"{this}: started");
-
-        cardId_ = defaultCard_;
-        cardName_ = "-";
-        accessCode_ = "1111";   // 1111 is just the default value we set, lol
 
         rebindWindow_.Show();
         var config = new ConfigIni()
