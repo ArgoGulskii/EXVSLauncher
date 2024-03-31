@@ -555,7 +555,7 @@ public partial class RebindViewModel : ViewModelBase
             // If the given card isn't registered, restore the previous card text and cancel card operations.
             if (!response.Success)
             {
-                CardName = tempName;
+                await showCardStatus("ERROR", tempName);
                 return;
             }
 
@@ -579,6 +579,7 @@ public partial class RebindViewModel : ViewModelBase
                 }
                 else
                 {
+                    ChangePresets(RebindBindings.PresetPSStick);
                     PresetText = "NO PROFILE";
                 }
             }
@@ -764,7 +765,7 @@ public partial class RebindViewModel : ViewModelBase
     }
 
     // Time in milliseconds to display a card operation message and lock out player inputs.
-    private const int MESSAGE_DELAY = 800;
+    private const int MESSAGE_DELAY = 1000;
     private const int HTTP_TIMEOUT = 5000;
 
     DateTime cardTime = DateTime.UtcNow;
