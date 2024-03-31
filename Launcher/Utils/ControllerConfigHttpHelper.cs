@@ -23,6 +23,10 @@ public struct ControllerConfig
     public int[] BKey;
     public int[] CKey;
     public int[] DKey;
+    public int[] SubKey;
+    public int[] SpecialShootingKey;
+    public int[] SpecialMeleeKey;
+    public int[] BurstKey;
     public int[] StartKey;
     public int[] CardKey;
 }
@@ -30,11 +34,11 @@ public struct ControllerConfig
 public class ControllerConfigHttpHelper
 {
     private static HttpClient? sharedClient;
-    private Mutex mu = new Mutex();
+    private static volatile Semaphore mu_http = new Semaphore(1, 1);
 
     public void SetBaseClient(string serverIp, string serverPort)
     {
-        if (mu.WaitOne(0))
+        if (mu_http.WaitOne(0))
         {
             if (serverPort != "")
             {
@@ -51,16 +55,16 @@ public class ControllerConfigHttpHelper
                 };
             }
             sharedClient.Timeout = TimeSpan.FromSeconds(3);
-            mu.ReleaseMutex();
+            mu_http.Release();
         }
     }
 
     public async Task<CardInfo?> GetCardInfoAsync(string cardId)
     {
-        if (mu.WaitOne(0))
+        if (mu_http.WaitOne(0))
         {
-            var ret = await GetCardInfoAsync(cardId);
-            mu.ReleaseMutex();
+            var ret = await GetCardInfo(cardId);
+            mu_http.Release();
             return ret;
         }
         return null;
@@ -110,10 +114,10 @@ public class ControllerConfigHttpHelper
 
     public async Task<ControllerConfig?> GetControllerConfigAsync(string cardId)
     {
-        if (mu.WaitOne(0))
+        if (mu_http.WaitOne(0))
         {
             var ret = await GetControllerConfig(cardId);
-            mu.ReleaseMutex();
+            mu_http.Release();
             return ret;
         }
         return null;
@@ -149,6 +153,10 @@ public class ControllerConfigHttpHelper
                 jsondict.TryGetValue("bKey", out cc.BKey);
                 jsondict.TryGetValue("cKey", out cc.CKey);
                 jsondict.TryGetValue("dKey", out cc.DKey);
+                jsondict.TryGetValue("subKey", out cc.SubKey);
+                jsondict.TryGetValue("specialshootingKey", out cc.SpecialShootingKey);
+                jsondict.TryGetValue("specialmeleeKey", out cc.SpecialMeleeKey);
+                jsondict.TryGetValue("burstKey", out cc.BurstKey);
                 jsondict.TryGetValue("startKey", out cc.StartKey);
                 jsondict.TryGetValue("cardKey", out cc.CardKey);
 
@@ -162,10 +170,10 @@ public class ControllerConfigHttpHelper
     public async Task<bool> SendControllerConfigAsync(string cardId, ControllerConfig bindings)
     {
         
-        if (mu.WaitOne(0))
+        if (mu_http.WaitOne(0))
         { 
-            var ret = await SendControllerConfigAsync(cardId, bindings);
-            mu.ReleaseMutex();
+            var ret = await SendControllerConfig(cardId, bindings);
+            mu_http.Release();
             return ret;
         }
         return false;
@@ -182,15 +190,7 @@ public class ControllerConfigHttpHelper
         var data = new
         {
             ChipId = cardId,
-            ControllerConfig = new
-            {
-                AKey = bindings.AKey,
-                BKey = bindings.BKey,
-                CKey = bindings.CKey,
-                DKey = bindings.DKey,
-                StartKey = bindings.StartKey,
-                CardKey = bindings.CardKey
-            }
+            ControllerConfig = bindings,
         };
 
         string jsonData = JsonSerializer.Serialize(data);

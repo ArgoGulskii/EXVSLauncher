@@ -160,23 +160,6 @@ public partial class RebindViewModel : ViewModelBase
 {
     public RebindViewModel() : this(0, null!, null!, "", "", "localhost", "")
     {
-        ModalVisible = false;
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        HandleDown();
-        UpdateBindingText();
     }
 
     public RebindViewModel(int id, RebindWindow window, string configPath, string cardPath, string defaultCard, string serverIP, string serverPort)
@@ -208,8 +191,8 @@ public partial class RebindViewModel : ViewModelBase
         cardSelected_ = index.Select(idx => idx == 10).ToProperty(this, x => x.CardSelected);
         testSelected_ = index.Select(idx => idx == 11).ToProperty(this, x => x.TestSelected);
         saveSelected_ = index.Select(idx => idx == 12).ToProperty(this, x => x.SaveSelected);
-        loadCardSelected_ = index.Select(idx => idx == 13).ToProperty(this, x => x.SaveCardSelected);
-        saveCardSelected_ = index.Select(idx => idx == 14).ToProperty(this, x => x.LoadCardSelected);
+        loadCardSelected_ = index.Select(idx => idx == 13).ToProperty(this, x => x.LoadCardSelected);
+        saveCardSelected_ = index.Select(idx => idx == 14).ToProperty(this, x => x.SaveCardSelected);
         removeCardSelected_ = index.Select(idx => idx == 15).ToProperty(this, x => x.RemoveCardSelected);
 
         if (defaultCard_ == "")
@@ -339,11 +322,6 @@ public partial class RebindViewModel : ViewModelBase
             8 => this.GetType().GetProperty("BurstText"),
             9 => this.GetType().GetProperty("StartText"),
             10 => this.GetType().GetProperty("CardText"),
-            11 => this.GetType().GetProperty("Blackhole"),
-            12 => this.GetType().GetProperty("Blackhole"),
-            13 => this.GetType().GetProperty("CardName"),
-            14 => this.GetType().GetProperty("Blackhole"),
-            15 => this.GetType().GetProperty("Blackhole"),
             _ => null,
         };
     }
@@ -445,15 +423,18 @@ public partial class RebindViewModel : ViewModelBase
         lastState_ = input;
 
         // If waiting on card functions, reject all input except to cancel card functions.
-        if (waitingCard_ && DateTime.UtcNow - cardTime > TimeSpan.FromMilliseconds(500))
+        if (waitingCard_)
         {
-            var startTime = DateTime.UtcNow;
-            foreach (int button in diff.Pressed)
+            if (DateTime.UtcNow - cardTime > TimeSpan.FromMilliseconds(500))
             {
-                if (Bindings.Main[button])
+                var startTime = DateTime.UtcNow;
+                foreach (int button in diff.Pressed)
                 {
-                    // Set flag to cancel ongoing card operations if possible.
-                    CReader.SetCancel(id_);
+                    if (Bindings.Main[button])
+                    {
+                        // Set flag to cancel ongoing card operations if possible.
+                        CReader.SetCancel(id_);
+                    }
                 }
             }
             return;
@@ -498,20 +479,20 @@ public partial class RebindViewModel : ViewModelBase
                     break;
                 }
 
-                if (LoadCardSelected && defaultCard_ != "")
+                if (LoadCardSelected && defaultCard_ != "" && !waitingCard_)
                 {
                     waitingCard_ = true;
                     cardTime = DateTime.UtcNow;
                     // Start a thread to load a smartcard; we ignore exceptions/returns from this thread.
-                    Task.Run(() => loadCard());
+                    Task.Run(async () => await loadCardAsync());
                 }
 
-                if (SaveCardSelected && defaultCard_ != "" && cardId_ != defaultCard_)
+                if (SaveCardSelected && defaultCard_ != "" && cardId_ != defaultCard_ && !waitingCard_)
                 {
                     waitingCard_ = true;
                     cardTime = DateTime.UtcNow;
                     // Start a thread to save configs to a smartcard; we ignore exceptions/returns from this thread.
-                    Task.Run(() => saveCard());
+                    Task.Run(async () => await saveCardAsync());
                 }
 
                 if (RemoveCardSelected && defaultCard_ != "")
@@ -521,6 +502,131 @@ public partial class RebindViewModel : ViewModelBase
                     ChangePresets(RebindBindings.PresetPSStick);
                 }
             }
+        }
+    }
+
+    // All of the card related functions (load/saveCard) need to be run async.
+    private async Task loadCardAsync()
+    {
+        try
+        {
+            Console.WriteLine("Loading card for instance: " + id_);
+            if (mu.WaitOne(0))
+            {
+                await loadCard();
+                mu.Release();
+            }
+            else
+            {
+                var tempName = CardName;
+                CardName = "IN USE";
+                await Task.Delay(MESSAGE_DELAY);
+                CardName = tempName;
+            }
+            Console.WriteLine("Load operation completed for id: " + id_ + " (card: " + cardId_ + ")");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Unexpected exception caught: " + ex.ToString());
+        }
+        waitingCard_ = false;
+    }
+
+    private async Task loadCard()
+    {
+        string tempName = CardName;
+        CardName = "TAP CARD";
+        try
+        {
+            CardReaderResponse response = CReader.GetUUIDWithLockAndID(id_);
+
+            // If the given card isn't registered, restore the previous card text and cancel card operations.
+            if (!response.Success)
+            {
+                CardName = tempName;
+                return;
+            }
+
+            // If the card is registered, change the card name "..." to signify working state, regardless of whether there's a saved controller config.
+            cardId_ = response.ID;
+            CardName = "...";
+            string playerName = "EXVSPLAYER";
+
+            // Get the card's name from the server, then get the card's controller configs if the player card exists.
+            CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfo(cardId_);
+            if (ci.HasValue)
+            {
+                playerName = ci.Value.Name;
+
+                ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfig(cardId_);
+                if (cc.HasValue)
+                {
+                    RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
+                    cardBindings.Name = playerName + " (Custom)";
+                    ChangePresets(cardBindings);
+                }
+                else
+                {
+                    PresetText = "NO PROFILE";
+                }
+            }
+            else
+            {
+                Console.WriteLine("Card " + cardId_ + " not found in database, skipping fetching of controller config.");
+            }
+
+            // Change card name to card's ID.
+            CardName = cardId_;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error during card read and profile fetch. Operation cancelled: " + ex.ToString());
+            CardName = "ERROR";
+            await Task.Delay(MESSAGE_DELAY);
+            CardName = tempName;
+        }
+    }
+
+    private async Task saveCardAsync()
+    {
+        Console.WriteLine("Saving card: " + cardId_);
+        if (mu.WaitOne(0))
+        {
+            await saveCard();
+            mu.Release();
+        }
+        else
+        {
+            var tempName = CardName;
+            CardName = "ERROR";
+            await Task.Delay(MESSAGE_DELAY);
+            CardName = tempName;
+        }
+        Console.WriteLine("Save operation completed for card: " + cardId_);
+        waitingCard_ = false;
+    }
+
+    private async Task saveCard()
+    {
+        // Attempt to save the user's current button layout to the card.
+        bool success = await ControllerConfigHttpHelper.SendControllerConfig(cardId_, RebindBindingsToControllerConfig(Bindings));
+
+        // If successful, briefly show "SAVED" to indicate a successful save, otherwise show "ERROR".
+        if (success)
+        {
+            Console.WriteLine("Saved controller config to card " + cardId_ + " [" + CardName + "]");
+            var tempName = CardName;
+            CardName = "SAVED";
+            await Task.Delay(MESSAGE_DELAY);
+            CardName = tempName;
+        }
+        else
+        {
+            Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + CardName + "]");
+            var tempName = CardName;
+            CardName = "ERROR";
+            await Task.Delay(MESSAGE_DELAY);
+            CardName = tempName;
         }
     }
 
@@ -559,6 +665,38 @@ public partial class RebindViewModel : ViewModelBase
         }
         SetBinding(4, binding, rb);
 
+        // Sub Key
+        binding = GetBinding(5, rb);
+        foreach (int button in cc.AKey)
+        {
+            binding[button] = true;
+        }
+        SetBinding(5, binding, rb);
+
+        // Special Shooting Key
+        binding = GetBinding(6, rb);
+        foreach (int button in cc.BKey)
+        {
+            binding[button] = true;
+        }
+        SetBinding(6, binding, rb);
+
+        // Special Melee Key
+        binding = GetBinding(7, rb);
+        foreach (int button in cc.CKey)
+        {
+            binding[button] = true;
+        }
+        SetBinding(7, binding, rb);
+
+        // Burst Key
+        binding = GetBinding(8, rb);
+        foreach (int button in cc.DKey)
+        {
+            binding[button] = true;
+        }
+        SetBinding(8, binding, rb);
+
         // Start Key
         binding = GetBinding(9, rb);
         foreach (int button in cc.StartKey)
@@ -593,6 +731,18 @@ public partial class RebindViewModel : ViewModelBase
         // D Key
         binding = GetBinding(4, rb);
         cc.DKey = binding.ToArray<int>();
+        // Sub Key
+        binding = GetBinding(5, rb);
+        cc.SubKey = binding.ToArray<int>();
+        // Special Shooting Key
+        binding = GetBinding(6, rb);
+        cc.SpecialShootingKey = binding.ToArray<int>();
+        // Special Melee Key
+        binding = GetBinding(7, rb);
+        cc.SpecialMeleeKey = binding.ToArray<int>();
+        // Burst Key
+        binding = GetBinding(8, rb);
+        cc.BurstKey = binding.ToArray<int>();
         // Start Key
         binding = GetBinding(9, rb);
         cc.StartKey = binding.ToArray<int>();
@@ -603,87 +753,8 @@ public partial class RebindViewModel : ViewModelBase
         return cc;
     }
 
-    // All of the card related functions (load/saveCard) need to be run async. Loading the card from the cardreader specifically requires thread safety.
-    private async Task loadCardAsync()
-    {
-        if (mu.WaitOne(0))
-        {
-            await loadCard();
-            mu.ReleaseMutex();
-        }
-        else
-        {
-            var tempName = CardName;
-            CardName = "IN USE";
-            Thread.Sleep(200);
-            CardName = tempName;
-        }
-        waitingCard_ = false;
-    }
-    private async Task loadCard()
-    {
-        string tempName = CardName;
-        CardName = "TAP CARD";
-        try
-        {
-            CardReaderResponse response = CReader.GetUUIDWithLockAndID(id_);
-
-            // If the given card isn't registered, restore the previous card text and cancel card operations.
-            if (!response.Success)
-            {
-                CardName = tempName;
-                return;
-            }
-
-            // If the card is registered, change the card name to the player's name, regardless of whether there's a saved controller config.
-            cardId_ = response.HexID;
-            CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfoAsync(cardId_);
-            CardName = cardId_;
-
-            ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfigAsync(cardId_);
-            if (cc.HasValue)
-            {
-                RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
-                cardBindings.Name = ci.Value.Name + " (Custom)";
-                ChangePresets(cardBindings);
-            }
-            else
-            {
-                PresetText = "NO PROFILE";
-                UpdateBindingText();
-            }
-        }
-        catch (Exception ex)
-        {
-            CardName = tempName;
-            Console.WriteLine("Error during card read, likely due to card being removed mid-read. Read cancelled: " + ex.ToString());
-        }
-    }
-    private async Task saveCard()
-    {
-        // Attempt to save the user's current button layout to the card.
-        bool success = await ControllerConfigHttpHelper.SendControllerConfigAsync(cardId_, RebindBindingsToControllerConfig(Bindings));
-
-        // If successful, briefly show "SAVED" to indicate a successful save, otherwise show "ERROR".
-        if (success)
-        {
-            Console.WriteLine("Saved controller config to card " + cardId_ + " [" + CardName + "]");
-            var tempName = CardName;
-            CardName = "SAVED";
-            Thread.Sleep(200);
-            CardName = tempName;
-        }
-        else
-        {
-            Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + CardName + "]");
-            var tempName = CardName;
-            CardName = "ERROR";
-            Thread.Sleep(200);
-            CardName = tempName;
-        }
-
-        waitingCard_ = false;
-    }
+    // Time in milliseconds to display a card operation message and lock out player inputs.
+    private const int MESSAGE_DELAY = 800;
 
     DateTime cardTime = DateTime.UtcNow;
     private bool active_ = false;
@@ -693,7 +764,7 @@ public partial class RebindViewModel : ViewModelBase
     private string accessCode_;
 
     private bool waitingCard_ = false;
-    private static Mutex mu = new Mutex();
+    private static volatile Semaphore mu = new Semaphore(1, 1);
 
     private bool modalVisible_ = true;
     public bool ModalVisible
@@ -874,12 +945,6 @@ public partial class RebindViewModel : ViewModelBase
     readonly ObservableAsPropertyHelper<bool> saveSelected_;
     public bool SaveSelected => saveSelected_.Value;
 
-    private readonly RebindWindow rebindWindow_;
-    private readonly string configPath_;
-    private readonly string cardPath_;
-    private string? controllerPath_;
-    private string defaultCard_;
-
     readonly ObservableAsPropertyHelper<bool> loadCardSelected_;
     public bool LoadCardSelected => loadCardSelected_.Value;
 
@@ -895,12 +960,11 @@ public partial class RebindViewModel : ViewModelBase
     readonly ObservableAsPropertyHelper<bool> removeCardSelected_;
     public bool RemoveCardSelected => removeCardSelected_.Value;
 
-    public Bitmap? HeaderBitmap { get; } = HeaderImage.Get();
+    private readonly RebindWindow rebindWindow_;
+    private readonly string configPath_;
+    private readonly string cardPath_;
+    private string? controllerPath_;
+    private string defaultCard_;
 
-    private string blackhole_ = "";
-    public string Blackhole
-    {
-        get => blackhole_;
-        set => this.RaiseAndSetIfChanged(ref blackhole_, value);
-    }
+    public Bitmap? HeaderBitmap { get; } = HeaderImage.Get();
 }

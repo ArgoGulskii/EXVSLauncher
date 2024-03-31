@@ -91,7 +91,11 @@ public partial class LaunchViewModel : ViewModelBase
             serverProcess_.StartInfo.WorkingDirectory = Path.GetDirectoryName(serverPath);
             try
             {
+                //serverProcess_.StartInfo.UseShellExecute = false;
+                //serverProcess_.StartInfo.RedirectStandardOutput = true;
+                //serverProcess_.OutputDataReceived += (sender, args) => Console.WriteLine("received output: {0}", args.Data);
                 serverProcess_.Start();
+                //serverProcess_.BeginOutputReadLine();
             }
             catch (Exception ex)
             {

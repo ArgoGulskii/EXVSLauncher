@@ -16,7 +16,7 @@ namespace Launcher.Utils;
 
 public struct CardReaderResponse
 {
-    public string HexID;
+    public string ID;
     public bool Success;
     public string Error;
 }
@@ -155,7 +155,7 @@ public class CardReader
     private string readerName;      // Name of selected reader
     private ulong timeout;          // Timeout for polling for cardreader state changes in milliseconds; 0 is instant return.
 
-    private Mutex mu = new Mutex();  // Mutex for preventing multiple users from accessing card reader at the same time
+    private static volatile Semaphore mu_card = new Semaphore(1, 1);  // Mutex for preventing multiple users from accessing card reader at the same time
     private bool cancel = false;     // Boolean to cancel waiting on card reader scan
     private int currUser = -1;
 
@@ -204,10 +204,10 @@ public class CardReader
             return false;
         }
 
-        if (mu.WaitOne(0))
+        if (mu_card.WaitOne(0))
         {
             SetTimeout(newTimeout);
-            mu.ReleaseMutex();
+            mu_card.Release();
             return true;
         }
         return false;
@@ -264,18 +264,18 @@ public class CardReader
         cancel = false;
         var response = new CardReaderResponse()
         {
-            HexID = "",
+            ID = "",
             Success = false,
             Error = "failed to acquire UUID, see console output",
         };
-        if (mu.WaitOne(0))
+        if (mu_card.WaitOne(0))
         {
             // Set the current user to the given ID; this is the user that is allowed to cancel card operations.
             currUser = id;
             try
             {
-                response.HexID = GetUUID();
-                if (response.HexID != "")
+                response.ID = GetUUID();
+                if (response.ID != "")
                 {
                     response.Success = true;
                 }
@@ -286,11 +286,11 @@ public class CardReader
             }
             // Reset the current user to -1, which doesn't match any ID.
             currUser = -1;
-            mu.ReleaseMutex();
+            mu_card.Release();
         }
         else
         {
-            response.HexID = "";
+            response.ID = "";
             response.Success = false;
             response.Error = "failed to acquire mutex";
         }
