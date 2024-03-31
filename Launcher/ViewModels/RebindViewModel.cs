@@ -174,7 +174,7 @@ public partial class RebindViewModel : ViewModelBase
         accessCode_ = "1111";   // 1111 is just the default value we set, lol
 
         CReader.ConnectReader(); // Connect to a cardreader. This will only run once.
-        CReader.SetTimeoutWithLock(5000); // Set cardreader timeout to 5 seconds.
+        CReader.SetTimeoutWithLock(HTTP_TIMEOUT); // Set cardreader timeout to 5 seconds.
         ControllerConfigHttpHelper.SetBaseClient(serverIP, serverPort);
 
         var index = this.WhenAnyValue(x => x.SelectedIndex);
@@ -425,7 +425,22 @@ public partial class RebindViewModel : ViewModelBase
         // If waiting on card functions, reject all input except to cancel card functions.
         if (waitingCard_)
         {
-            if (DateTime.UtcNow - cardTime > TimeSpan.FromMilliseconds(500))
+            // If somehow the inputs are locked for over 3 times the http timeout duration, start checking if the mutex is still locked and if waitingCard_ can be released.
+            if (DateTime.UtcNow - cardTime > TimeSpan.FromMilliseconds(HTTP_TIMEOUT * 3))
+            {
+                Console.WriteLine("WARNING: Inputs have been locked for card operations for over " + (HTTP_TIMEOUT * 3 / 1000) + " seconds, attempting to release.");
+                if (mu.WaitOne(0))
+                {
+                    waitingCard_ = false;
+                    mu.Release();
+                    Console.WriteLine("Inputs successfully released. This implies an internal error with card handling operations.");
+                }
+                else
+                {
+                    Console.WriteLine("ERROR: Unable to release inputs. Semaphore is still held; something has gone terribly wrong....");
+                }
+            }
+            else if (DateTime.UtcNow - cardTime > TimeSpan.FromMilliseconds(500))
             {
                 var startTime = DateTime.UtcNow;
                 foreach (int button in diff.Pressed)
@@ -755,6 +770,7 @@ public partial class RebindViewModel : ViewModelBase
 
     // Time in milliseconds to display a card operation message and lock out player inputs.
     private const int MESSAGE_DELAY = 800;
+    private const int HTTP_TIMEOUT = 5000;
 
     DateTime cardTime = DateTime.UtcNow;
     private bool active_ = false;
