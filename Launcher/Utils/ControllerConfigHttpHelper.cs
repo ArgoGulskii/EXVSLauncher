@@ -190,7 +190,19 @@ public class ControllerConfigHttpHelper
         var data = new
         {
             ChipId = cardId,
-            ControllerConfig = bindings,
+            ControllerConfig = new
+            {
+                AKey = bindings.AKey,
+                BKey = bindings.BKey,
+                CKey = bindings.CKey,
+                DKey = bindings.DKey,
+                SubKey = bindings.SubKey,
+                SpecialShootingKey = bindings.SpecialShootingKey,
+                SpecialMeleeKey = bindings.SpecialMeleeKey,
+                BurstKey = bindings.BurstKey,
+                StartKey = bindings.StartKey,
+                CardKey = bindings.CardKey
+            },
         };
 
         string jsonData = JsonSerializer.Serialize(data);
@@ -211,10 +223,11 @@ public class ControllerConfigHttpHelper
         if (jsonResponse != "")
         {
             Console.WriteLine($"update response: '{jsonResponse}'\n");
+            return true;
         }
         else
         {
-            Console.WriteLine("no response set controller");
+            Console.WriteLine("no response when saving controller");
         }
         return false;
     }

@@ -533,10 +533,7 @@ public partial class RebindViewModel : ViewModelBase
             }
             else
             {
-                var tempName = CardName;
-                CardName = "IN USE";
-                await Task.Delay(MESSAGE_DELAY);
-                CardName = tempName;
+                await showCardStatus("IN USE", CardName);
             }
             Console.WriteLine("Load operation completed for id: " + id_ + " (card: " + cardId_ + ")");
         }
@@ -588,6 +585,7 @@ public partial class RebindViewModel : ViewModelBase
             else
             {
                 Console.WriteLine("Card " + cardId_ + " not found in database, skipping fetching of controller config.");
+                await showCardStatus("ERROR", tempName);
             }
 
             // Change card name to card's ID.
@@ -596,9 +594,7 @@ public partial class RebindViewModel : ViewModelBase
         catch (Exception ex)
         {
             Console.WriteLine("Error during card read and profile fetch. Operation cancelled: " + ex.ToString());
-            CardName = "ERROR";
-            await Task.Delay(MESSAGE_DELAY);
-            CardName = tempName;
+            await showCardStatus("ERROR", tempName);
         }
     }
 
@@ -612,10 +608,7 @@ public partial class RebindViewModel : ViewModelBase
         }
         else
         {
-            var tempName = CardName;
-            CardName = "ERROR";
-            await Task.Delay(MESSAGE_DELAY);
-            CardName = tempName;
+            await showCardStatus("ERROR", CardName);
         }
         Console.WriteLine("Save operation completed for card: " + cardId_);
         waitingCard_ = false;
@@ -630,19 +623,21 @@ public partial class RebindViewModel : ViewModelBase
         if (success)
         {
             Console.WriteLine("Saved controller config to card " + cardId_ + " [" + CardName + "]");
-            var tempName = CardName;
-            CardName = "SAVED";
-            await Task.Delay(MESSAGE_DELAY);
-            CardName = tempName;
+            await showCardStatus("SAVED", CardName);
         }
         else
         {
             Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + CardName + "]");
-            var tempName = CardName;
-            CardName = "ERROR";
-            await Task.Delay(MESSAGE_DELAY);
-            CardName = tempName;
+            await showCardStatus("ERROR", CardName);
         }
+    }
+
+    // Function to display a status message in the card text slot. Takes the message to display and the original text to revert to after the display period expires.
+    private async Task showCardStatus(string message, string originalText)
+    {
+        CardName = message;
+        await Task.Delay(MESSAGE_DELAY);
+        CardName = originalText;
     }
 
     private RebindBindings ControllerConfigToRebindBindings(ControllerConfig cc)
