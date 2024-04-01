@@ -29,7 +29,7 @@ public class CardQueue
 
     ~CardQueue()
     {
-        this.abort();
+        this.Kill();
     }
 
     public CardQueue(ulong timeout)
@@ -41,7 +41,7 @@ public class CardQueue
         _thread.Start();
     }
 
-    public void abort()
+    public void Kill()
     {
         if (_thread != null)
         {
@@ -84,6 +84,10 @@ public class CardQueue
                 }
                 // Give users 1 second after their scan before the next one begins.
                 Thread.Sleep(1000);
+            }
+            foreach (JobWrapper job in _Queue)
+            {
+                Console.WriteLine("Cardreader process terminating, skipping remaining request from user: " + job.ID);
             }
         }
         catch (Exception ex)

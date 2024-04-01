@@ -36,6 +36,7 @@ public partial class LaunchViewModel : ViewModelBase
     public ObservableCollection<ClientLaunchViewModel> Clients { get; set; }
 
     private Process? serverProcess_;
+    private CardQueue? cReaderQueue_;
 
     public static Process? FindServer(string serverPath)
     {
@@ -120,7 +121,7 @@ public partial class LaunchViewModel : ViewModelBase
 
         // Create the shared card reader instance for all rebind windows.
         ulong CARD_TIMEOUT = 5000;
-        CardQueue CReaderQueue = new CardQueue(CARD_TIMEOUT);
+        cReaderQueue_ = new CardQueue(CARD_TIMEOUT);
 
         List<Task> tasks = [];
         WindowUtils.HideTaskbar();
@@ -132,7 +133,7 @@ public partial class LaunchViewModel : ViewModelBase
 
                 if (client.Visible && client.AutoRebind)
                 {
-                    client.StartRebind(CReaderQueue);
+                    client.StartRebind(cReaderQueue_);
                 }
 
                 if (!client.Start(Main)) return;
@@ -147,6 +148,18 @@ public partial class LaunchViewModel : ViewModelBase
 
     public void Stop()
     {
+        try
+        {
+            if (cReaderQueue_ != null)
+            {
+                cReaderQueue_.Kill();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to kill card reader thread: {ex.Message}");
+        }
+
         try
         {
             if (serverProcess_ != null)
