@@ -424,16 +424,20 @@ public partial class RebindViewModel : ViewModelBase
         lastState_ = input;
 
         // If waiting on card functions, reject all input except to cancel card functions.
-        if (waitingCard_)
+        if (cancel_ != null && !cancel_.IsCancellationRequested || inputsLocked_)
         {
             foreach (int button in diff.Pressed)
             {
                 if (Bindings.Main[button])
                 {
-                    // Set flag to cancel ongoing card operations if possible. waitingCard_ will be reset by the finalization of the card operations.
-                    if (cancel_ != null)
+                    // Set flag to cancel ongoing card operations if possible.
+                    if (cancel_ != null && !cancel_.IsCancellationRequested)
                     {
                         cancel_.Cancel();
+                        if (!inputsLocked_)
+                        {
+                            ModalVisible = false;
+                        }
                     }
                 }
             }
@@ -481,21 +485,23 @@ public partial class RebindViewModel : ViewModelBase
 
                 if (cardQueue_ != null)
                 {
-                    if (LoadCardSelected && defaultCard_ != "" && !waitingCard_)
+                    if (LoadCardSelected && defaultCard_ != "" && !inputsLocked_)
                     {
-                        waitingCard_ = true;
-                        cancel_ = new CancellationTokenSource();
-                        // Bring up the cardreader wait screen.
-                        ModalText = "Reader in use, please wait.";
-                        ModalVisible = true;
-                        // Add our card request to the queue.
-                        cardQueue_.AddJob(id_, updateModalText, loadCardCallback, cancel_.Token);
+                        if (cancel_ == null || cancel_.IsCancellationRequested)
+                        {
+                            cancel_ = new CancellationTokenSource();
+                            // Bring up the cardreader wait screen.
+                            ModalText = "Reader in use, please wait.";
+                            ModalVisible = true;
+                            // Add our card request to the queue.
+                            cardQueue_.AddJob(id_, updateModalText, loadCardCallback, inputLockCallback, cancel_);
+                        }
                     }
 
-                    if (SaveCardSelected && defaultCard_ != "" && cardId_ != defaultCard_ && !waitingCard_)
+                    if (SaveCardSelected && defaultCard_ != "" && cardId_ != defaultCard_ && !inputsLocked_)
                     {
                         Console.WriteLine("Saving card: " + cardId_);
-                        waitingCard_ = true;
+                        inputsLocked_ = true;
                         // Start a thread to save configs to a smartcard; we ignore exceptions/returns from this thread.
                         Task.Run(async () => saveCardAsync());
                     }
@@ -511,16 +517,22 @@ public partial class RebindViewModel : ViewModelBase
         }
     }
 
-    private void loadCardCallback(CardReaderResponse response)
+    private void inputLockCallback()
     {
-        // If this callback is reached, we no longer need the cancellation token.
-        cancel_ = null;
+        inputsLocked_ = true;
+    }
+
+    private void loadCardCallback(CardReaderResponse response, CancellationTokenSource cancel)
+    {
+        // Remove the text overlay.
+        // The given cancel token no longer has a use, so we mark it as 'cancelled' to free up our inputs.
         ModalVisible = false;
+        cancel.Cancel();
 
         // If the given card isn't registered, restore the previous card text and cancel card operations.
         if (!response.Success)
         {
-            waitingCard_ = false;
+            inputsLocked_ = false;
             return;
         }
 
@@ -575,7 +587,7 @@ public partial class RebindViewModel : ViewModelBase
             cardId_ = defaultCard_;
             CardName = "-";
             ChangePresets(RebindBindings.PresetPSStick);
-            waitingCard_ = false;
+            inputsLocked_ = false;
             return;
         }
 
@@ -583,12 +595,13 @@ public partial class RebindViewModel : ViewModelBase
         CardName = cardId_;
 
         // Release user inputs.
-        waitingCard_ = false;
+        inputsLocked_ = false;
     }
 
     public void updateModalText(String text)
     {
         ModalText = text;
+        ModalVisible = true;
     }
 
     private async Task saveCardAsync()
@@ -609,22 +622,22 @@ public partial class RebindViewModel : ViewModelBase
         if (success)
         {
             Console.WriteLine("Saved controller config to card " + cardId_ + " [" + CardName + "]");
-            endCardWaitWithStatus("SAVED", CardName);
+            releaseInputsWithMessage("SAVED", CardName);
         }
         else
         {
             Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + CardName + "]");
-            endCardWaitWithStatus("ERROR", CardName);
+            releaseInputsWithMessage("ERROR", CardName);
         }
     }
 
     // Function to display a status message in the card text slot before freeing user input.
-    private async Task endCardWaitWithStatus(string message, string originalText)
+    private async Task releaseInputsWithMessage(string message, string originalText)
     {
         CardName = message;
         await Task.Delay(MESSAGE_DELAY).ConfigureAwait(false);
         CardName = originalText;
-        waitingCard_ = false;
+        inputsLocked_ = false;
     }
 
     private RebindBindings ControllerConfigToRebindBindings(ControllerConfig cc)
@@ -759,7 +772,7 @@ public partial class RebindViewModel : ViewModelBase
     private string cardId_;
     private string accessCode_;
 
-    private bool waitingCard_ = false;
+    private bool inputsLocked_ = false;
     private CancellationTokenSource? cancel_ = null;
 
     private bool modalVisible_ = true;

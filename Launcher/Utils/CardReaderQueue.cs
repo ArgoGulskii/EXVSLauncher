@@ -13,9 +13,10 @@ namespace Launcher.Utils;
 class JobWrapper
 {
     public int ID;
-    public Action<String>? WriteMessage;
-    public Action<CardReaderResponse>? Finish;
-    public CancellationToken Cancel;
+    public Action<String>? WriteMessageCallback;
+    public Action<CardReaderResponse, CancellationTokenSource>? FinishCallback;
+    public Action? InputLockCallback;
+    public CancellationTokenSource Cancel;
 }
 
 public class CardQueue
@@ -58,18 +59,42 @@ public class CardQueue
         {
             foreach (JobWrapper job in _Queue.GetConsumingEnumerable(_cancelWork.Token))
             {
+                // Check if job is cancelled before starting any work.
+                if (job.Cancel.IsCancellationRequested)
+                {
+                    if (job.FinishCallback != null)
+                    {
+                        job.FinishCallback(new CardReaderResponse(), job.Cancel);
+                    }
+                    continue;
+                }
+
+                // Process job.
                 try
                 {
-                    if (job.WriteMessage != null)
+                    // Signal to user that they can scan a card, and start scanning for cards.
+                    if (job.WriteMessageCallback != null)
                     {
-                        job.WriteMessage("SCAN YOUR CARD");
+                        job.WriteMessageCallback("SCAN YOUR CARD");
                     }
-                    CardReaderResponse resp = _reader.GetUUIDWithRepeatAndCancel(job.ID, job.Cancel);
+                    CardReaderResponse resp = _reader.GetUUIDWithRepeatAndCancel(job.ID, job.Cancel.Token);
 
-                    string id = resp.ID;
-                    if (job.Finish != null)
+                    // Signal to the requesting thread that it's no longer possible to cancel.
+                    if (job.InputLockCallback != null)
                     {
-                        job.Finish(resp);
+                        job.InputLockCallback();
+                    }
+
+                    // One final check for cancellation. If there is no cancel, then proceed to process response.
+                    if (!job.Cancel.IsCancellationRequested)
+                    {
+                        string id = resp.ID;
+                    }
+
+                    // Pass results back to the finishing callback.
+                    if (job.FinishCallback != null)
+                    {
+                        job.FinishCallback(resp, job.Cancel);
                     }
                 }
                 catch (ThreadInterruptedException e)
@@ -96,14 +121,15 @@ public class CardQueue
         }
     }
 
-    public void AddJob(int ID, Action<String> message, Action<CardReaderResponse> finish, CancellationToken token)
+    public void AddJob(int ID, Action<String> message, Action<CardReaderResponse, CancellationTokenSource> finish, Action inputLock, CancellationTokenSource token)
     {
         // wrap job
         var wrap = new JobWrapper()
         {
             ID = ID,
-            WriteMessage = message,
-            Finish = finish,
+            WriteMessageCallback = message,
+            FinishCallback = finish,
+            InputLockCallback = inputLock,
             Cancel = token,
         };
         // Attempt to add to queue; block for up to 10ms.
