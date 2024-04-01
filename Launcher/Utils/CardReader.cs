@@ -155,10 +155,6 @@ public class CardReader
     private string readerName;      // Name of selected reader
     private ulong timeout;          // Timeout for polling for cardreader state changes in milliseconds; 0 is instant return.
 
-    private static volatile Semaphore mu_card = new Semaphore(1, 1);  // Mutex for preventing multiple users from accessing card reader at the same time
-    private bool cancel = false;     // Boolean to cancel waiting on card reader scan
-    private int currUser = -1;
-
     // Constructor
     public CardReader()
     {
@@ -175,42 +171,10 @@ public class CardReader
         Reset();
     }
 
-    public void SetCancel(int id)
-    {
-        if (id == currUser)
-        {
-            Console.WriteLine("Cancelling card reader operations. (User: " + id + ")");
-            cancel = true;
-        }
-        else
-        {
-            Console.WriteLine("Cannot cancel card operations, incorrect user. (User: " + id + ", Expected: " + currUser + ")");
-        }
-    }
-
     // Setter method for timeout duration
     public void SetTimeout(ulong newTimeout)
     {
         timeout = newTimeout;
-    }
-
-    // Lock wrapper around timeout setter
-    public bool SetTimeoutWithLock(ulong newTimeout)
-    {
-        cancel = false;
-        // Skip setting timeout if it's unchanged.
-        if (timeout == newTimeout)
-        {
-            return false;
-        }
-
-        if (mu_card.WaitOne(0))
-        {
-            SetTimeout(newTimeout);
-            mu_card.Release();
-            return true;
-        }
-        return false;
     }
 
     // Method to initially connect to a cardreader
@@ -257,50 +221,40 @@ public class CardReader
         readerName = readers[0];
         Console.WriteLine("Selected reader: " + readerName);
     }
-
-    // Lock wrapper around GetUUID(); returns a struct with success/failure state
-    public CardReaderResponse GetUUIDWithLockAndID(int id)
+    public CardReaderResponse GetUUIDWithRepeatAndCancel(int userID, CancellationToken? cancelToken)
     {
-        cancel = false;
+        Console.WriteLine("\n\n-------\nProcessing card request for ID: " + userID);
+
+        var startTime = DateTime.UtcNow;
         var response = new CardReaderResponse()
         {
             ID = "",
             Success = false,
             Error = "failed to acquire UUID, see console output",
         };
-        if (mu_card.WaitOne(0))
+
+        // If a card read request fails while sending data to the card, restart the process while we still have time.
+        do
         {
-            // Set the current user to the given ID; this is the user that is allowed to cancel card operations.
-            currUser = id;
-            try
+            response.ID = GetUUIDWithCancel(cancelToken);
+            if (response.ID != "")
             {
-                response.ID = GetUUID();
-                if (response.ID != "")
-                {
-                    response.Success = true;
-                }
+                response.Error = "";
+                response.Success = true;
+                return response;
             }
-            catch (Exception e)
+            if (cancelToken.HasValue && cancelToken.Value.IsCancellationRequested)
             {
-                response.Error = e.ToString();
+                response.Error = "Cancellation requested by user " + userID;
+                return response;
             }
-            // Reset the current user to -1, which doesn't match any ID.
-            currUser = -1;
-            mu_card.Release();
-        }
-        else
-        {
-            response.ID = "";
-            response.Success = false;
-            response.Error = "failed to acquire mutex";
-        }
+        } while (DateTime.UtcNow - startTime < TimeSpan.FromMilliseconds(timeout) && !response.Success);
         return response;
     }
 
-
     // Method to get the UUID from a card on the connected cardreader.
     // Blocks for the given timeout duration while waiting for a card to be placed.
-    public string GetUUID()
+    public string GetUUIDWithCancel(CancellationToken? cancel)
     {
         int ret;
         uint activeProtocol;
@@ -328,10 +282,9 @@ public class CardReader
         var startTime = DateTime.UtcNow;
         while (DateTime.UtcNow - startTime < TimeSpan.FromMilliseconds(timeout))
         {
-            if (cancel)
+            if (cancel.HasValue && cancel.Value.IsCancellationRequested)
             {
                 Console.WriteLine("Card read cancelled.");
-                cancel = false;
                 return "";
             }
             ret = SCardGetStatusChangeW(hContext, 0, readerState, 1);
@@ -339,7 +292,7 @@ public class CardReader
             if (ret != SCARD_S_SUCCESS)
             {
                 Console.WriteLine("Failed to get status change. Error code: " + (SCardErrors)ret);
-                return "";
+                continue;
             }
 
             if ((readerState[0].dwEventState & SCARD_STATE_PRESENT) == SCARD_STATE_PRESENT)

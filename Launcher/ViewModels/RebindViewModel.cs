@@ -15,6 +15,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 using System.Xml.Linq;
+using Launcher.ViewModels;
+using Launcher;
 
 namespace Launcher.ViewModels;
 
@@ -158,11 +160,11 @@ public class RebindBindings
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public partial class RebindViewModel : ViewModelBase
 {
-    public RebindViewModel() : this(0, null!, null!, "", "", "localhost", "")
+    public RebindViewModel() : this(0, null!, null!, "", "", "localhost", "", null)
     {
     }
 
-    public RebindViewModel(int id, RebindWindow window, string configPath, string cardPath, string defaultCard, string serverIP, string serverPort)
+    public RebindViewModel(int id, RebindWindow window, string configPath, string cardPath, string defaultCard, string serverIP, string serverPort, CardQueue? cardQueue)
     {
         id_ = id;
         rebindWindow_ = window;
@@ -172,9 +174,8 @@ public partial class RebindViewModel : ViewModelBase
         cardId_ = defaultCard;
         cardName_ = "-";
         accessCode_ = "1111";   // 1111 is just the default value we set, lol
+        cardQueue_ = cardQueue;
 
-        CReader.ConnectReader(); // Connect to a cardreader. This will only run once.
-        CReader.SetTimeoutWithLock(HTTP_TIMEOUT); // Set cardreader timeout to 5 seconds.
         ControllerConfigHttpHelper.SetBaseClient(serverIP, serverPort);
 
         var index = this.WhenAnyValue(x => x.SelectedIndex);
@@ -195,7 +196,7 @@ public partial class RebindViewModel : ViewModelBase
         saveCardSelected_ = index.Select(idx => idx == 14).ToProperty(this, x => x.SaveCardSelected);
         removeCardSelected_ = index.Select(idx => idx == 15).ToProperty(this, x => x.RemoveCardSelected);
 
-        if (defaultCard_ == "")
+        if (defaultCard_ == "" || cardQueue_ == null)
         {
             cardName_ = "DISABLED";
         }
@@ -425,30 +426,14 @@ public partial class RebindViewModel : ViewModelBase
         // If waiting on card functions, reject all input except to cancel card functions.
         if (waitingCard_)
         {
-            // If somehow the inputs are locked for over 3 times the http timeout duration, start checking if the mutex is still locked and if waitingCard_ can be released.
-            if (DateTime.UtcNow - cardTime > TimeSpan.FromMilliseconds(HTTP_TIMEOUT * 3))
+            foreach (int button in diff.Pressed)
             {
-                Console.WriteLine("WARNING: Inputs have been locked for card operations for over " + (HTTP_TIMEOUT * 3 / 1000) + " seconds, attempting to release.");
-                if (mu.WaitOne(0))
+                if (Bindings.Main[button])
                 {
-                    waitingCard_ = false;
-                    mu.Release();
-                    Console.WriteLine("Inputs successfully released. This implies an internal error with card handling operations.");
-                }
-                else
-                {
-                    Console.WriteLine("ERROR: Unable to release inputs. Semaphore is still held; something has gone terribly wrong....");
-                }
-            }
-            else if (DateTime.UtcNow - cardTime > TimeSpan.FromMilliseconds(500))
-            {
-                var startTime = DateTime.UtcNow;
-                foreach (int button in diff.Pressed)
-                {
-                    if (Bindings.Main[button])
+                    // Set flag to cancel ongoing card operations if possible. waitingCard_ will be reset by the finalization of the card operations.
+                    if (cancel_ != null)
                     {
-                        // Set flag to cancel ongoing card operations if possible.
-                        CReader.SetCancel(id_);
+                        cancel_.Cancel();
                     }
                 }
             }
@@ -494,137 +479,107 @@ public partial class RebindViewModel : ViewModelBase
                     break;
                 }
 
-                if (LoadCardSelected && defaultCard_ != "" && !waitingCard_)
+                if (cardQueue_ != null)
                 {
-                    waitingCard_ = true;
-                    cardTime = DateTime.UtcNow;
-                    // Start a thread to load a smartcard; we ignore exceptions/returns from this thread.
-                    Task.Run(async () => await loadCardAsync());
-                }
-
-                if (SaveCardSelected && defaultCard_ != "" && cardId_ != defaultCard_ && !waitingCard_)
-                {
-                    waitingCard_ = true;
-                    cardTime = DateTime.UtcNow;
-                    // Start a thread to save configs to a smartcard; we ignore exceptions/returns from this thread.
-                    Task.Run(async () => await saveCardAsync());
-                }
-
-                if (RemoveCardSelected && defaultCard_ != "")
-                {
-                    cardId_ = defaultCard_;
-                    CardName = "-";
-                    ChangePresets(RebindBindings.PresetPSStick);
-                }
-            }
-        }
-    }
-
-    // All of the card related functions (load/saveCard) need to be run async.
-    private async Task loadCardAsync()
-    {
-        try
-        {
-            Console.WriteLine("Loading card for instance: " + id_);
-            if (mu.WaitOne(0))
-            {
-                await loadCard();
-                mu.Release();
-            }
-            else
-            {
-                await showCardStatus("IN USE", CardName);
-            }
-            Console.WriteLine("Load operation completed for id: " + id_ + " (card: " + cardId_ + ")");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Unexpected exception caught: " + ex.ToString());
-        }
-        waitingCard_ = false;
-    }
-
-    private async Task loadCard()
-    {
-        string tempName = CardName;
-        CardName = "TAP CARD";
-        try
-        {
-            CardReaderResponse response = CReader.GetUUIDWithLockAndID(id_);
-
-            // If the given card isn't registered, restore the previous card text and cancel card operations.
-            if (!response.Success)
-            {
-                await showCardStatus("ERROR", tempName);
-                return;
-            }
-
-            // If the card is registered, change the card name "..." to signify working state, regardless of whether there's a saved controller config.
-            cardId_ = response.ID;
-            CardName = "...";
-            string playerName = "EXVSPLAYER";
-
-            // Get the card's name from the server, then get the card's controller configs if the player card exists.
-            CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfo(cardId_);
-            if (ci.HasValue)
-            {
-                playerName = ci.Value.Name;
-
-                ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfig(cardId_);
-                if (cc.HasValue)
-                {
-                    RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
-                    cardBindings.Name = playerName + " (Custom)";
-                    ChangePresets(cardBindings);
-                }
-                else
-                {
-                    RebindBindings cardBindings = new()
+                    if (LoadCardSelected && defaultCard_ != "" && !waitingCard_)
                     {
-                        Name = "NO PROFILE",
-                        Main = [1],
-                        Melee = [4],
-                        Boost = [6],
-                        Switch = [2],
-                        Start = [10],
-                        Card = [13],
-                    };
-                    ChangePresets(cardBindings);
+                        waitingCard_ = true;
+                        cancel_ = new CancellationTokenSource();
+                        // Bring up the cardreader wait screen.
+                        ModalText = "Reader in use, please wait.";
+                        ModalVisible = true;
+                        // Add our card request to the queue.
+                        cardQueue_.AddJob(id_, updateModalText, loadCardCallback, cancel_.Token);
+                    }
+
+                    if (SaveCardSelected && defaultCard_ != "" && cardId_ != defaultCard_ && !waitingCard_)
+                    {
+                        Console.WriteLine("Saving card: " + cardId_);
+                        waitingCard_ = true;
+                        // Start a thread to save configs to a smartcard; we ignore exceptions/returns from this thread.
+                        Task.Run(async () => saveCardAsync());
+                    }
+
+                    if (RemoveCardSelected && defaultCard_ != "")
+                    {
+                        cardId_ = defaultCard_;
+                        CardName = "-";
+                        ChangePresets(RebindBindings.PresetPSStick);
+                    }
                 }
             }
-            else
-            {
-                Console.WriteLine("Card " + cardId_ + " not found in database, skipping fetching of controller config.");
-                await showCardStatus("ERROR", tempName);
-            }
-
-            // Change card name to card's ID.
-            CardName = cardId_;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error during card read and profile fetch. Operation cancelled: " + ex.ToString());
-            await showCardStatus("ERROR", tempName);
         }
     }
 
-    private async Task saveCardAsync()
+    private void loadCardCallback(CardReaderResponse response)
     {
-        Console.WriteLine("Saving card: " + cardId_);
-        if (mu.WaitOne(0))
+        // If this callback is reached, we no longer need the cancellation token.
+        cancel_ = null;
+        ModalVisible = false;
+
+        // If the given card isn't registered, restore the previous card text and cancel card operations.
+        if (!response.Success)
         {
-            await saveCard();
-            mu.Release();
+            waitingCard_ = false;
+            return;
+        }
+
+        // If the card is registered, change the card name "..." to signify working state, regardless of whether there's a saved controller config.
+        cardId_ = response.ID;
+        CardName = "...";
+        Task.Run(async () => loadCardHttpAsync());
+    }
+
+    private async void loadCardHttpAsync()
+    {
+        string playerName = "EXVSPLAYER";
+
+        // Get the card's name from the server, then get the card's controller configs if the player card exists.
+        CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfo(cardId_);
+        if (ci.HasValue)
+        {
+            playerName = ci.Value.Name;
+
+            ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfig(cardId_);
+            if (cc.HasValue)
+            {
+                RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
+                cardBindings.Name = playerName + " (Custom)";
+                ChangePresets(cardBindings);
+            }
+            else
+            {
+                RebindBindings cardBindings = new()
+                {
+                    Name = "NO PROFILE",
+                    Main = [1],
+                    Melee = [4],
+                    Boost = [6],
+                    Switch = [2],
+                    Start = [10],
+                    Card = [13],
+                };
+                ChangePresets(cardBindings);
+            }
         }
         else
         {
-            await showCardStatus("ERROR", CardName);
+            Console.WriteLine("Card " + cardId_ + " not found in database, skipping fetching of controller config.");
         }
-        Console.WriteLine("Save operation completed for card: " + cardId_);
+
+        // Change card name to card's ID.
+        CardName = cardId_;
+
+        // Release user inputs.
         waitingCard_ = false;
     }
 
-    private async Task saveCard()
+    public void updateModalText(String text)
+    {
+        ModalText = text;
+    }
+
+    private async Task saveCardAsync()
     {
         // Attempt to save the user's current button layout to the card.
         bool success = await ControllerConfigHttpHelper.SendControllerConfig(cardId_, RebindBindingsToControllerConfig(Bindings));
@@ -633,21 +588,22 @@ public partial class RebindViewModel : ViewModelBase
         if (success)
         {
             Console.WriteLine("Saved controller config to card " + cardId_ + " [" + CardName + "]");
-            await showCardStatus("SAVED", CardName);
+            endCardWaitWithStatus("SAVED", CardName);
         }
         else
         {
             Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + CardName + "]");
-            await showCardStatus("ERROR", CardName);
+            endCardWaitWithStatus("ERROR", CardName);
         }
     }
 
-    // Function to display a status message in the card text slot. Takes the message to display and the original text to revert to after the display period expires.
-    private async Task showCardStatus(string message, string originalText)
+    // Function to display a status message in the card text slot before freeing user input.
+    private async Task endCardWaitWithStatus(string message, string originalText)
     {
         CardName = message;
-        await Task.Delay(MESSAGE_DELAY);
+        await Task.Delay(MESSAGE_DELAY).ConfigureAwait(false);
         CardName = originalText;
+        waitingCard_ = false;
     }
 
     private RebindBindings ControllerConfigToRebindBindings(ControllerConfig cc)
@@ -775,9 +731,7 @@ public partial class RebindViewModel : ViewModelBase
 
     // Time in milliseconds to display a card operation message and lock out player inputs.
     private const int MESSAGE_DELAY = 1000;
-    private const int HTTP_TIMEOUT = 5000;
 
-    DateTime cardTime = DateTime.UtcNow;
     private bool active_ = false;
     private InputState lastState_ = new();
     private int id_;
@@ -785,7 +739,7 @@ public partial class RebindViewModel : ViewModelBase
     private string accessCode_;
 
     private bool waitingCard_ = false;
-    private static volatile Semaphore mu = new Semaphore(1, 1);
+    private CancellationTokenSource? cancel_ = null;
 
     private bool modalVisible_ = true;
     public bool ModalVisible
@@ -986,6 +940,7 @@ public partial class RebindViewModel : ViewModelBase
     private readonly string cardPath_;
     private string? controllerPath_;
     private string defaultCard_;
+    private CardQueue? cardQueue_;
 
     public Bitmap? HeaderBitmap { get; } = HeaderImage.Get();
 }

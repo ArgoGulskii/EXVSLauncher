@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Launcher.Output;
+using Launcher.Utils;
 
 namespace Launcher.ViewModels;
 
@@ -91,11 +92,7 @@ public partial class LaunchViewModel : ViewModelBase
             serverProcess_.StartInfo.WorkingDirectory = Path.GetDirectoryName(serverPath);
             try
             {
-                //serverProcess_.StartInfo.UseShellExecute = false;
-                //serverProcess_.StartInfo.RedirectStandardOutput = true;
-                //serverProcess_.OutputDataReceived += (sender, args) => Console.WriteLine("received output: {0}", args.Data);
                 serverProcess_.Start();
-                //serverProcess_.BeginOutputReadLine();
             }
             catch (Exception ex)
             {
@@ -120,6 +117,11 @@ public partial class LaunchViewModel : ViewModelBase
             }
         }
 
+
+        // Create the shared card reader instance for all rebind windows.
+        ulong CARD_TIMEOUT = 5000;
+        CardQueue CReaderQueue = new CardQueue(CARD_TIMEOUT);
+
         List<Task> tasks = [];
         WindowUtils.HideTaskbar();
         foreach (var client in Clients)
@@ -130,7 +132,7 @@ public partial class LaunchViewModel : ViewModelBase
 
                 if (client.Visible && client.AutoRebind)
                 {
-                    client.StartRebind();
+                    client.StartRebind(CReaderQueue);
                 }
 
                 if (!client.Start(Main)) return;

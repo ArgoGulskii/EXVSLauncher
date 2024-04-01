@@ -16,6 +16,10 @@ internal class ConfigIni
     public string? ControllerPath;
     public InputBindings Bindings;
 
+    public string? IpOrInterface;
+    public bool UseInterface;
+    public string? Server;
+
     public string? AudioId;
 
     public void Write(string path)
@@ -62,6 +66,37 @@ internal class ConfigIni
 
         ini.Persist();
         Console.WriteLine($"Wrote config to {path}");
+    }
+
+    public void WriteNetwork(string path)
+    {
+        var ini = new INIFile(path);
+        ini.WrapValueInQuotes = false;
+        if (!ini.HasSection("config"))
+            ini.AddSection("config");
+
+        var section = ini.GetSection("config");
+        if (IpOrInterface != null && IpOrInterface != "")
+        {
+            if (UseInterface)
+            {
+                section["InterfaceName"] = IpOrInterface;
+                section.Remove("IpAddress");
+            }
+            else
+            {
+                section["IpAddress"] = IpOrInterface;
+                section.Remove("InterfaceName");
+            }
+        }
+
+        if (Server != null && Server != "")
+        {
+            section["Server"] = Server;
+        }
+
+        ini.Persist();
+        Console.WriteLine($"Wrote network config to {path}");
     }
 }
 

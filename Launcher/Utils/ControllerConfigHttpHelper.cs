@@ -34,40 +34,24 @@ public struct ControllerConfig
 public class ControllerConfigHttpHelper
 {
     private static HttpClient? sharedClient;
-    private static volatile Semaphore mu_http = new Semaphore(1, 1);
 
     public void SetBaseClient(string serverIp, string serverPort)
     {
-        if (mu_http.WaitOne(0))
+        if (serverPort != "")
         {
-            if (serverPort != "")
+            sharedClient = new()
             {
-                sharedClient = new()
-                {
-                    BaseAddress = new Uri("http://" + serverIp + ":" + serverPort),
-                };
-            }
-            else
-            {
-                sharedClient = new()
-                {
-                    BaseAddress = new Uri("http://" + serverIp),
-                };
-            }
-            sharedClient.Timeout = TimeSpan.FromSeconds(3);
-            mu_http.Release();
+                BaseAddress = new Uri("http://" + serverIp + ":" + serverPort),
+            };
         }
-    }
-
-    public async Task<CardInfo?> GetCardInfoAsync(string cardId)
-    {
-        if (mu_http.WaitOne(0))
+        else
         {
-            var ret = await GetCardInfo(cardId);
-            mu_http.Release();
-            return ret;
+            sharedClient = new()
+            {
+                BaseAddress = new Uri("http://" + serverIp),
+            };
         }
-        return null;
+        sharedClient.Timeout = TimeSpan.FromSeconds(3);
     }
 
     public async Task<CardInfo?> GetCardInfo(string cardId)
@@ -112,17 +96,6 @@ public class ControllerConfigHttpHelper
         return ci;
     }
 
-    public async Task<ControllerConfig?> GetControllerConfigAsync(string cardId)
-    {
-        if (mu_http.WaitOne(0))
-        {
-            var ret = await GetControllerConfig(cardId);
-            mu_http.Release();
-            return ret;
-        }
-        return null;
-    }
-
     public async Task<ControllerConfig?> GetControllerConfig(string cardId)
     {
         if (sharedClient == null)
@@ -165,18 +138,6 @@ public class ControllerConfigHttpHelper
         }
         Console.WriteLine("no response get controller");
         return null;
-    }
-
-    public async Task<bool> SendControllerConfigAsync(string cardId, ControllerConfig bindings)
-    {
-        
-        if (mu_http.WaitOne(0))
-        { 
-            var ret = await SendControllerConfig(cardId, bindings);
-            mu_http.Release();
-            return ret;
-        }
-        return false;
     }
 
     public async Task<bool> SendControllerConfig(string cardId, ControllerConfig bindings)

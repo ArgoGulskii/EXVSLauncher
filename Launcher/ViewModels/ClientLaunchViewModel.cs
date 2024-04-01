@@ -2,6 +2,7 @@
 using Launcher.Input;
 using Launcher.Output;
 using Launcher.Views.Rebind;
+using Launcher.Utils;
 using Microsoft.VisualBasic.Devices;
 using ReactiveUI;
 using System;
@@ -69,8 +70,12 @@ public class ClientLaunchViewModel : ViewModelBase
         {
             ControllerEnabled = false,
             AudioId = Output == null ? null : Output.Audio.DevicePath,
+            IpOrInterface = ClientInfo.NetworkValue,
+            UseInterface = (ClientInfo.NetworkMode == 0),
+            Server = ClientInfo.ServerIP,
         };
         config.Write(ConfigPath);
+        config.WriteNetwork(ConfigPath);
 
         var gamePath = ClientInfo.GamePath ?? "";
         if (gamePath == "") gamePath = mvm.PresetsViewModel.SelectedPreset!.GamePath;
@@ -126,10 +131,10 @@ public class ClientLaunchViewModel : ViewModelBase
         }
     }
 
-    public void StartRebind()
+    public void StartRebind(CardQueue CReaderQueue)
     {
         rebindWindow_ = new RebindWindow();
-        RebindViewModel rebindViewModel_ = new(ClientInfo.Id, rebindWindow_, ConfigPath, CardPath, ClientInfo.DefaultCard, ClientInfo.ServerIP, ClientInfo.ServerPort);
+        RebindViewModel rebindViewModel_ = new(ClientInfo.Id, rebindWindow_, ConfigPath, CardPath, ClientInfo.DefaultCard, ClientInfo.ServerIP, ClientInfo.ServerPort, CReaderQueue);
         rebindWindow_.DataContext = rebindViewModel_;
         InputManager.Instance.AddRebindWindow(rebindViewModel_);
         rebindViewModel_.Start();
