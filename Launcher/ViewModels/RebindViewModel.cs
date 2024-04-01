@@ -534,37 +534,49 @@ public partial class RebindViewModel : ViewModelBase
     {
         string playerName = "EXVSPLAYER";
 
-        // Get the card's name from the server, then get the card's controller configs if the player card exists.
-        CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfo(cardId_);
-        if (ci.HasValue)
+        try
         {
-            playerName = ci.Value.Name;
-
-            ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfig(cardId_);
-            if (cc.HasValue)
+            // Get the card's name from the server, then get the card's controller configs if the player card exists.
+            CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfo(cardId_);
+            if (ci.HasValue)
             {
-                RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
-                cardBindings.Name = playerName + " (Custom)";
-                ChangePresets(cardBindings);
+                playerName = ci.Value.Name;
+
+                ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfig(cardId_);
+                if (cc.HasValue)
+                {
+                    RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
+                    cardBindings.Name = playerName + " (Custom)";
+                    ChangePresets(cardBindings);
+                }
+                else
+                {
+                    RebindBindings cardBindings = new()
+                    {
+                        Name = "NO PROFILE",
+                        Main = [1],
+                        Melee = [4],
+                        Boost = [6],
+                        Switch = [2],
+                        Start = [10],
+                        Card = [13],
+                    };
+                    ChangePresets(cardBindings);
+                }
             }
             else
             {
-                RebindBindings cardBindings = new()
-                {
-                    Name = "NO PROFILE",
-                    Main = [1],
-                    Melee = [4],
-                    Boost = [6],
-                    Switch = [2],
-                    Start = [10],
-                    Card = [13],
-                };
-                ChangePresets(cardBindings);
+                Console.WriteLine("Card " + cardId_ + " not found in database, skipping fetching of controller config.");
             }
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine("Card " + cardId_ + " not found in database, skipping fetching of controller config.");
+            Console.WriteLine("ERROR: Server communication timeout or other failure during load.");
+            cardId_ = defaultCard_;
+            CardName = "-";
+            ChangePresets(RebindBindings.PresetPSStick);
+            waitingCard_ = false;
+            return;
         }
 
         // Change card name to card's ID.
@@ -581,8 +593,17 @@ public partial class RebindViewModel : ViewModelBase
 
     private async Task saveCardAsync()
     {
+        bool success;
         // Attempt to save the user's current button layout to the card.
-        bool success = await ControllerConfigHttpHelper.SendControllerConfig(cardId_, RebindBindingsToControllerConfig(Bindings));
+        try
+        {
+            success = await ControllerConfigHttpHelper.SendControllerConfig(cardId_, RebindBindingsToControllerConfig(Bindings));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR: Server communication timeout or other failure during save.");
+            success = false;
+        }
 
         // If successful, briefly show "SAVED" to indicate a successful save, otherwise show "ERROR".
         if (success)

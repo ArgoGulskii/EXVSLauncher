@@ -51,7 +51,7 @@ public class ControllerConfigHttpHelper
                 BaseAddress = new Uri("http://" + serverIp),
             };
         }
-        sharedClient.Timeout = TimeSpan.FromSeconds(3);
+        sharedClient.Timeout = TimeSpan.FromSeconds(5);
     }
 
     public async Task<CardInfo?> GetCardInfo(string cardId)
