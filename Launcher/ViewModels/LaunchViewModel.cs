@@ -120,8 +120,17 @@ public partial class LaunchViewModel : ViewModelBase
 
 
         // Create the shared card reader instance for all rebind windows.
+        // If no card reader is found, we set the queue to null.
         ulong CARD_TIMEOUT = 5000;
-        cReaderQueue_ = new CardQueue(CARD_TIMEOUT);
+        try
+        {
+            cReaderQueue_ = new CardQueue(CARD_TIMEOUT);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine("CardQueue creation failed: " + ex.ToString());
+            cReaderQueue_ = null;
+        }
 
         List<Task> tasks = [];
         WindowUtils.HideTaskbar();

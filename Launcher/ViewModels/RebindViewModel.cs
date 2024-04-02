@@ -196,11 +196,6 @@ public partial class RebindViewModel : ViewModelBase
         saveCardSelected_ = index.Select(idx => idx == 14).ToProperty(this, x => x.SaveCardSelected);
         removeCardSelected_ = index.Select(idx => idx == 15).ToProperty(this, x => x.RemoveCardSelected);
 
-        if (defaultCard_ == "" || cardQueue_ == null)
-        {
-            cardName_ = "DISABLED";
-        }
-
         Reset();
     }
 
@@ -220,7 +215,14 @@ public partial class RebindViewModel : ViewModelBase
         ChangePresets(RebindBindings.PresetPSStick);
 
         cardId_ = defaultCard_;
-        CardName = "-";
+        if (defaultCard_ == "" || cardQueue_ == null)
+        {
+            CardName = "DISABLED";
+        }
+        else
+        {
+            CardName = "-";
+        }
         accessCode_ = "1111";   // 1111 is just the default value we set, lol
     }
 
@@ -503,7 +505,7 @@ public partial class RebindViewModel : ViewModelBase
                         Console.WriteLine("Saving card: " + cardId_);
                         inputsLocked_ = true;
                         // Start a thread to save configs to a smartcard; we ignore exceptions/returns from this thread.
-                        Task.Run(async () => saveCardAsync());
+                        Task.Run(async () => await saveCardAsync());
                     }
 
                     if (RemoveCardSelected && defaultCard_ != "")
@@ -539,7 +541,7 @@ public partial class RebindViewModel : ViewModelBase
         // If the card is registered, change the card name "..." to signify working state, regardless of whether there's a saved controller config.
         cardId_ = response.ID;
         CardName = "...";
-        Task.Run(async () => loadCardHttpAsync());
+        Task.Run(() => loadCardHttpAsync());
     }
 
     private async void loadCardHttpAsync()
@@ -583,7 +585,7 @@ public partial class RebindViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine("ERROR: Server communication timeout or other failure during load.");
+            Console.WriteLine("ERROR: Server communication timeout or other failure during load: " + ex.ToString());
             cardId_ = defaultCard_;
             CardName = "-";
             ChangePresets(RebindBindings.PresetPSStick);
@@ -614,7 +616,7 @@ public partial class RebindViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine("ERROR: Server communication timeout or other failure during save.");
+            Console.WriteLine("ERROR: Server communication timeout or other failure during save: " + ex.ToString());
             success = false;
         }
 
@@ -622,12 +624,12 @@ public partial class RebindViewModel : ViewModelBase
         if (success)
         {
             Console.WriteLine("Saved controller config to card " + cardId_ + " [" + CardName + "]");
-            releaseInputsWithMessage("SAVED", CardName);
+            await releaseInputsWithMessage("SAVED", CardName);
         }
         else
         {
             Console.WriteLine("WARNING: Failed to save controller config to card " + cardId_ + " [" + CardName + "]");
-            releaseInputsWithMessage("ERROR", CardName);
+            await releaseInputsWithMessage("ERROR", CardName);
         }
     }
 

@@ -150,19 +150,19 @@ public class CardReader
     }
 
     // Class variables
-    private IntPtr hContext;        // CardReader context handle
-    private IntPtr hCard;           // Smartcard handle
-    private string readerName;      // Name of selected reader
-    private ulong timeout;          // Timeout for polling for cardreader state changes in milliseconds; 0 is instant return.
+    private IntPtr _hContext;        // CardReader context handle
+    private IntPtr _hCard;           // Smartcard handle
+    private string _readerName;      // Name of selected reader
+    private ulong _timeout;          // Timeout for polling for cardreader state changes in milliseconds; 0 is instant return.
 
     // Constructor
     public CardReader()
     {
         // Default handles to nullptr and timeout to instant.
-        hContext = IntPtr.Zero;
-        hCard = IntPtr.Zero;
-        timeout = 0;
-        readerName = "";
+        _hContext = IntPtr.Zero;
+        _hCard = IntPtr.Zero;
+        _timeout = 0;
+        _readerName = "";
     }
 
     // Destructor
@@ -174,52 +174,78 @@ public class CardReader
     // Setter method for timeout duration
     public void SetTimeout(ulong newTimeout)
     {
-        timeout = newTimeout;
+        _timeout = newTimeout;
     }
 
-    // Method to initially connect to a cardreader
-    public void ConnectReader()
+    public bool Setup()
     {
-        if (hContext != IntPtr.Zero)
+        if (_hContext != IntPtr.Zero)
         {
             Console.WriteLine("CardReader already established, skipping connection setup.");
-            return;
+            return true;
         }
 
         // Establish context
-        int ret = SCardEstablishContext(SCARD_SCOPE_SYSTEM, IntPtr.Zero, IntPtr.Zero, out hContext);
+        int ret = SCardEstablishContext(SCARD_SCOPE_SYSTEM, IntPtr.Zero, IntPtr.Zero, out _hContext);
         if (ret != SCARD_S_SUCCESS)
         {
             Console.WriteLine("Failed to establish context. Error: " + (SCardErrors)ret);
-            hContext = IntPtr.Zero;
-            return;
+            _hContext = IntPtr.Zero;
+            return false;
+        }
+
+        return true;
+    }
+
+    public String[] GetReaders()
+    {
+        if (_hContext == IntPtr.Zero)
+        {
+            Console.WriteLine("CardReader not established, please run Setup().");
+            return [];
         }
 
         // Get available card readers.
         byte[] mszReaders = new byte[2048];
         uint pcchReaders = (uint)mszReaders.Length;
-        ret = SCardListReaders(hContext, null, mszReaders, ref pcchReaders);
+        int ret = SCardListReaders(_hContext, null, mszReaders, ref pcchReaders);
         if (ret != SCARD_S_SUCCESS)
         {
             Console.WriteLine("Failed to list readers. Error: " + (SCardErrors)ret);
-            hContext = IntPtr.Zero;
-            return;
+            _hContext = IntPtr.Zero;
+            return [];
         }
 
         // Convert the readers byte array to string array.
         string[] readers = Encoding.ASCII.GetString(mszReaders, 0, (int)pcchReaders - 1).Split('\0');
 
+        return readers;
+    }
+
+    // Method to initially connect to a cardreader
+    public bool ConnectReader(String selectedReader)
+    {
+        if (selectedReader != "")
+        {
+            _readerName = selectedReader;
+            Console.WriteLine("Selected reader: " + _readerName);
+            return true;
+        }
+
+        String[] readers = GetReaders();
+
         // Check if there were any available readers.
         if (readers.Length == 0)
         {
             Console.WriteLine("No card readers available.");
-            hContext = IntPtr.Zero;
-            return;
+            _hContext = IntPtr.Zero;
+            return false;
         }
 
         // Choose the first available reader.
-        readerName = readers[0];
-        Console.WriteLine("Selected reader: " + readerName);
+        _readerName = readers[0];
+        Console.WriteLine("Selected reader: " + _readerName);
+        return true;
     }
     public CardReaderResponse GetUUIDWithRepeatAndCancel(int userID, CancellationToken? cancelToken)
     {
@@ -248,7 +274,7 @@ public class CardReader
                 response.Error = "Cancellation requested by user " + userID;
                 return response;
             }
-        } while (DateTime.UtcNow - startTime < TimeSpan.FromMilliseconds(timeout) && !response.Success);
+        } while (DateTime.UtcNow - startTime < TimeSpan.FromMilliseconds(_timeout) && !response.Success);
         return response;
     }
 
@@ -259,7 +285,7 @@ public class CardReader
         int ret;
         uint activeProtocol;
 
-        if (hContext == IntPtr.Zero || readerName == "")
+        if (_hContext == IntPtr.Zero || _readerName == "")
         {
             Console.WriteLine("Error: not connected to any cardreader, skipping UUID request.");
             return "";
@@ -268,7 +294,7 @@ public class CardReader
         // Create a readerState for our selected card reader, with our starting states set to UNAWARE.
         SCARD_READERSTATE[] readerState = new SCARD_READERSTATE[1];
         readerState[0] = new SCARD_READERSTATE();
-        readerState[0].szReader = readerName;
+        readerState[0].szReader = _readerName;
         readerState[0].dwCurrentState = SCARD_STATE_UNAWARE;
 
         /******
@@ -280,14 +306,14 @@ public class CardReader
         // Poll for a change in the status of the reader for the given timeout duration.
         // As long as a card is on the reader, it is considered a status change, as we start from UNAWARE.
         var startTime = DateTime.UtcNow;
-        while (DateTime.UtcNow - startTime < TimeSpan.FromMilliseconds(timeout))
+        while (DateTime.UtcNow - startTime < TimeSpan.FromMilliseconds(_timeout))
         {
             if (cancel.HasValue && cancel.Value.IsCancellationRequested)
             {
                 Console.WriteLine("Card read cancelled.");
                 return "";
             }
-            ret = SCardGetStatusChangeW(hContext, 0, readerState, 1);
+            ret = SCardGetStatusChangeW(_hContext, 0, readerState, 1);
 
             if (ret != SCARD_S_SUCCESS)
             {
@@ -316,14 +342,14 @@ public class CardReader
         }
 
         // Connect to the card.
-        ret = SCardConnect(hContext, readerName, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, out hCard, out activeProtocol);
+        ret = SCardConnect(_hContext, _readerName, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, out _hCard, out activeProtocol);
         if (ret != SCARD_S_SUCCESS)
         {
             Console.WriteLine("Failed to connect to the card. Error code: " + (SCardErrors)ret);
             return "";
         }
 
-        Console.WriteLine("Connected to card on reader: " + readerName);
+        Console.WriteLine("Connected to card on reader: " + _readerName);
 
         // Send command APDU.
         byte[] commandAPDU = {
@@ -335,7 +361,7 @@ public class CardReader
             };
         byte[] response = new byte[256];
         uint responseLength = (uint)response.Length;
-        ret = SCardTransmit(hCard, IntPtr.Zero, commandAPDU, (uint)commandAPDU.Length, IntPtr.Zero, response, ref responseLength);
+        ret = SCardTransmit(_hCard, IntPtr.Zero, commandAPDU, (uint)commandAPDU.Length, IntPtr.Zero, response, ref responseLength);
         if (ret != SCARD_S_SUCCESS)
         {
             Console.WriteLine("Failed to transmit command APDU. Error code: " + (SCardErrors)ret);
@@ -363,10 +389,10 @@ public class CardReader
         int ret;
 
         // Release context and disconnect card if needed.
-        if (hCard != IntPtr.Zero)
+        if (_hCard != IntPtr.Zero)
         {
             Console.WriteLine("Disconnecting from card.");
-            ret = SCardDisconnect(hCard, 0);
+            ret = SCardDisconnect(_hCard, 0);
             if (ret != SCARD_S_SUCCESS)
             {
                 Console.WriteLine("WARNING: Failed to disconnect from card. Error: " + (SCardErrors)ret);
@@ -376,10 +402,10 @@ public class CardReader
         {
             Console.WriteLine("No card to disconnect, skipping.");
         }
-        if (hContext != IntPtr.Zero)
+        if (_hContext != IntPtr.Zero)
         {
             Console.WriteLine("Releasing cardreader context.");
-            ret = SCardReleaseContext(hContext);
+            ret = SCardReleaseContext(_hContext);
             if (ret != SCARD_S_SUCCESS)
             {
                 Console.WriteLine("WARNING: Failed to release cardreader context. Error: " + (SCardErrors)ret);
@@ -391,9 +417,9 @@ public class CardReader
         }
 
         // Reset all class variables.
-        hContext = IntPtr.Zero;
-        hCard = IntPtr.Zero;
-        timeout = 0;
-        readerName = "";
+        _hContext = IntPtr.Zero;
+        _hCard = IntPtr.Zero;
+        _timeout = 0;
+        _readerName = "";
     }
 }
