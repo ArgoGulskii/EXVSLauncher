@@ -196,6 +196,11 @@ public partial class RebindViewModel : ViewModelBase
         saveCardSelected_ = index.Select(idx => idx == 14).ToProperty(this, x => x.SaveCardSelected);
         removeCardSelected_ = index.Select(idx => idx == 15).ToProperty(this, x => x.RemoveCardSelected);
 
+        if (defaultCard_ == "")
+        {
+            Console.WriteLine("WARNING: No default card for game instance (ID " + id + "). Cardreader is disabled.");
+        }
+
         Reset();
     }
 
@@ -554,28 +559,43 @@ public partial class RebindViewModel : ViewModelBase
             CardInfo? ci = await ControllerConfigHttpHelper.GetCardInfo(cardId_);
             if (ci.HasValue)
             {
-                playerName = ci.Value.Name;
-
-                ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfig(cardId_);
-                if (cc.HasValue)
+                if (ci.Value.Exists)
                 {
-                    RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
-                    cardBindings.Name = playerName + " (Custom)";
-                    ChangePresets(cardBindings);
+                    playerName = ci.Value.Name;
+
+                    ControllerConfig? cc = await ControllerConfigHttpHelper.GetControllerConfig(cardId_);
+                    if (cc.HasValue)
+                    {
+                        RebindBindings cardBindings = ControllerConfigToRebindBindings(cc.Value);
+                        cardBindings.Name = playerName + " (Custom)";
+                        ChangePresets(cardBindings);
+                    }
+                    else
+                    {
+                        RebindBindings cardBindings = new()
+                        {
+                            Name = "NO PROFILE",
+                            Main = [1],
+                            Melee = [4],
+                            Boost = [6],
+                            Switch = [2],
+                            Start = [10],
+                            Card = [13],
+                        };
+                        ChangePresets(cardBindings);
+                    }
                 }
                 else
                 {
-                    RebindBindings cardBindings = new()
+                    string? sessionId = await ControllerConfigHttpHelper.PreLoadCard(cardId_, accessCode_);
+                    if (sessionId != null)
                     {
-                        Name = "NO PROFILE",
-                        Main = [1],
-                        Melee = [4],
-                        Boost = [6],
-                        Switch = [2],
-                        Start = [10],
-                        Card = [13],
-                    };
-                    ChangePresets(cardBindings);
+                        bool? registered = await ControllerConfigHttpHelper.RegisterCard(cardId_, accessCode_, sessionId);
+                        if (registered != null && registered.Value)
+                        {
+                            PresetText = "NEW CARD (Custom)";
+                        }
+                    }
                 }
             }
             else

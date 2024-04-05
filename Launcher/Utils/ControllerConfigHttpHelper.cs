@@ -15,6 +15,7 @@ public struct CardInfo
 {
     public string Name;
     public string CardId;
+    public bool Exists;
 }
 
 public struct ControllerConfig
@@ -66,6 +67,7 @@ public class ControllerConfigHttpHelper
         {
             Name = "UNKNOWN",
             CardId = cardId,
+            Exists = false,
         };
 
         using HttpResponseMessage response = await sharedClient.GetAsync("card/getBasicDisplayProfileById/" + cardId);
@@ -86,6 +88,7 @@ public class ControllerConfigHttpHelper
                 foreach (KeyValuePair<string, object> kvp in jsondict)
                 {
                     if (kvp.Key == "userName") ci.Name = kvp.Value.ToString();
+                    ci.Exists = true;
                 }
             }
         }
@@ -190,6 +193,144 @@ public class ControllerConfigHttpHelper
         {
             Console.WriteLine("no response when saving controller");
         }
+        return false;
+    }
+
+    public async Task<String> PreLoadCard(String id, String access)
+    {
+        if (sharedClient == null)
+        {
+            Console.WriteLine("No client\n");
+            return "";
+        }
+
+
+        var data = new
+        {
+            Type = 100,
+            RequestId = "MTHD_PRE_LOAD_CARD-8",
+            pre_load_card = new
+            {
+                AccessCode = access,
+                ChipId = id,
+                IsCard = true,
+                MuchaCountryCode = "JPN",
+            },
+        };
+
+        string jsonData = JsonSerializer.Serialize(data);
+
+        var jsonString = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+        var jsonStringOutput = await jsonString.ReadAsStringAsync();
+
+        Console.WriteLine("\n\nsending json string: " + jsonStringOutput);
+
+        using HttpResponseMessage response = await sharedClient.PostAsync("", jsonString);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("failed to preload card");
+            return "";
+        }
+
+        var content = response.Content;
+        var byteArray = await content.ReadAsByteArrayAsync();
+        var responseString = Encoding.ASCII.GetString(byteArray, 0, byteArray.Length);
+        var sessionId = _parseSessionId(byteArray);
+        Console.WriteLine("preload session id: " + sessionId);
+
+
+
+        if (sessionId != "")
+        {
+            Console.WriteLine($"preload card response: '{sessionId}'\n");
+            return sessionId;
+        }
+        else
+        {
+            Console.WriteLine("no response preload card");
+        }
+        return "";
+    }
+
+    private static String _parseSessionId(byte[] byteArray)
+    {
+        var byteString = BitConverter.ToString(byteArray).Replace("-", "");
+
+
+        // Cursed stuff because not supporting protobufs.
+        var start = "A00100E244140A0E";
+        var end = "30014000";
+
+        var startIdx = byteString.LastIndexOf(start);
+        var endIdx = byteString.LastIndexOf(end);
+
+        if (startIdx == -1 || endIdx == -1)
+        {
+            return "";
+        }
+
+        var startLastByteIdx = (startIdx + start.Length) / 2;
+        var endByteCount = (byteString.Length - endIdx) / 2;
+
+
+        var response = Encoding.ASCII.GetString(byteArray, startLastByteIdx, byteArray.Length - endByteCount - startLastByteIdx);
+        return response;
+    }
+
+    public async Task<bool> RegisterCard(String id, String access, String session)
+    {
+        if (sharedClient == null)
+        {
+            Console.WriteLine("No client\n");
+            return false;
+        }
+
+        var data = new
+        {
+            Type = 102,
+            RequestId = "MTHD_REGISTER_CARD-9",
+            PcbSerial = "1",
+            LocId = "JPN0JPN1",
+            AmId = "0",
+            register_card = new
+            {
+                SessionId = session,
+                AccessCode = access,
+                ChipId = id,
+                IsCard = true,
+                MuchaCountryCode = "JPN",
+            },
+        };
+
+        string jsonData = JsonSerializer.Serialize(data);
+
+        var jsonString = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+        var jsonStringOutput = await jsonString.ReadAsStringAsync();
+
+        Console.WriteLine("\n\nsending json string: " + jsonStringOutput);
+
+        using HttpResponseMessage response = await sharedClient.PostAsync("", jsonString);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("failed to register card");
+            return false;
+        }
+
+        var content = response.Content;
+        var byteArray = await content.ReadAsByteArrayAsync();
+        var responseString = Encoding.ASCII.GetString(byteArray, 0, byteArray.Length);
+
+        if (responseString.IndexOf(session) >= 0)
+        {
+            Console.WriteLine("Register success, session id matched");
+            return true;
+        }
+
+        Console.WriteLine("Register failed, no match for session id");
         return false;
     }
 }

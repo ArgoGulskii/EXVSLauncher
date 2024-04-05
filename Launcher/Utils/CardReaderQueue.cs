@@ -83,7 +83,7 @@ public class CardQueue
                     // Signal to user that they can scan a card, and start scanning for cards.
                     if (job.WriteMessageCallback != null)
                     {
-                        job.WriteMessageCallback("SCAN YOUR CARD");
+                        job.WriteMessageCallback("Scan your card");
                     }
                     CardReaderResponse resp = _reader.GetUUIDWithRepeatAndCancel(job.ID, job.Cancel.Token);
 
