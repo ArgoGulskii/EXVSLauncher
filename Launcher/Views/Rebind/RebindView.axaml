@@ -87,7 +87,7 @@
                 <RowDefinition Height="*"/>
 
                 <!-- Message -->
-                <RowDefinition Height="576"/>
+                <RowDefinition Height="792"/>
 
                 <!-- Fill -->
                 <RowDefinition Height="2*"/>
