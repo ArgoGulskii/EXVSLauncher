@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using Avalonia.Media.Imaging;
+using System;
 using System.IO;
 
 namespace Launcher;
@@ -11,8 +12,11 @@ internal class HeaderImage
         var imagePath = Path.Join(System.AppContext.BaseDirectory, "header.png");
         if (Path.Exists(imagePath))
         {
+            Console.WriteLine($"Found header image at {imagePath}");
             return new Bitmap(imagePath);
         }
+
+        Console.WriteLine($"Failed to find header image at {imagePath}");
         return null;
     }
 
