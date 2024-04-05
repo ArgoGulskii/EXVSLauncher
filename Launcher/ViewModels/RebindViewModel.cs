@@ -1,22 +1,16 @@
 using Avalonia.Media.Imaging;
-﻿using httptest;
 using Launcher.Input;
 using Launcher.Utils;
 using Launcher.Views.Rebind;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
-using System.Xml.Linq;
-using Launcher.ViewModels;
-using Launcher;
 
 namespace Launcher.ViewModels;
 

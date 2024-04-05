@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Avalonia;
+using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using Avalonia;
 
 namespace Launcher.Desktop;
 

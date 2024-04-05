@@ -2,14 +2,8 @@
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using ReactiveUI;
-using Avalonia.Media;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Collections.ObjectModel;
-using System.Linq;
 using Launcher.Output;
-using Avalonia.Input;
-using System.Diagnostics;
 
 namespace Launcher.ViewModels;
 

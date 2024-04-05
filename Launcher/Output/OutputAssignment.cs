@@ -1,18 +1,10 @@
-﻿using Launcher.Views;
-using NAudio.Wave.SampleProviders;
+﻿using Avalonia.Media.Imaging;
+using Launcher.Views;
 using NAudio.Wave;
 using ReactiveUI;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
-using Avalonia.Platform;
 using System.Reflection;
-using Avalonia;
-using Avalonia.Media.Imaging;
 
 namespace Launcher.Output;
 

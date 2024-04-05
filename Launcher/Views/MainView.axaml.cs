@@ -3,7 +3,6 @@ using Avalonia.Input;
 using DialogHostAvalonia;
 using Launcher.ViewModels;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;

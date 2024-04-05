@@ -3,7 +3,6 @@ using Launcher.Input;
 using Launcher.Output;
 using Launcher.Views.Rebind;
 using Launcher.Utils;
-using Microsoft.VisualBasic.Devices;
 using ReactiveUI;
 using System;
 using System.Diagnostics;

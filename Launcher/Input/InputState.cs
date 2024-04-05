@@ -1,9 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Launcher.Input;
+﻿namespace Launcher.Input;
 
 public enum Direction
 {

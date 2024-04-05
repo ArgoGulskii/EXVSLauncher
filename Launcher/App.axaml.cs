@@ -6,9 +6,7 @@ using Avalonia.Markup.Xaml;
 using Launcher.Input;
 using Launcher.ViewModels;
 using Launcher.Views;
-using Launcher.Views.Rebind;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text.Json;
 
 namespace Launcher;

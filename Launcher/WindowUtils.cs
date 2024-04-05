@@ -1,16 +1,10 @@
 ﻿global using HWND = System.IntPtr;
 
-using Avalonia;
-using Avalonia.Styling;
+using Launcher.Output;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reactive;
 using System.Runtime.InteropServices;
-
 using System.Text;
-using System;
-using System.Globalization;
-using Launcher.Output;
 
 namespace Launcher;
 

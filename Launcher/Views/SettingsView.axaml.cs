@@ -1,8 +1,6 @@
 using Avalonia.Controls;
-using Avalonia.Input;
 using Launcher.Output;
 using Launcher.ViewModels;
-using System;
 
 namespace Launcher.Views;
 

@@ -1,15 +1,8 @@
-﻿using Launcher.Utils;
-using Launcher.ViewModels;
+﻿using Launcher.ViewModels;
 using Linearstar.Windows.RawInput;
 using Linearstar.Windows.RawInput.Native;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Printing;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 
