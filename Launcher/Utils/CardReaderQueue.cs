@@ -36,13 +36,18 @@ public class CardQueue
     public CardQueue(ulong timeout)
     {
         _reader = new CardReader();
-        if (!_reader.Setup() || !_reader.ConnectReader(""))
-        {
-            throw new InvalidOperationException("Card reader could not be established.");
-        }
         _reader.SetTimeout(timeout);
         _thread = new Thread(this.work);
         _thread.Start();
+    }
+
+    public bool Setup()
+    {
+        bool success = _reader.Setup();
+        if (!success) return success;
+        success = _reader.ConnectReader("");
+        if (!success) return success;
+        return true;
     }
 
     public void Kill()

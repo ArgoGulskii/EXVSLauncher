@@ -193,6 +193,7 @@ public class CardReader
             _hContext = IntPtr.Zero;
             return false;
         }
+        Console.WriteLine("CardReader context established.");
 
         return true;
     }
