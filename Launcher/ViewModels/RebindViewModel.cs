@@ -381,10 +381,23 @@ public partial class RebindViewModel : ViewModelBase
             ChangePresets(Bindings.Next!);
             return;
         }
-        else if (SelectedIndex == 12)
+        else if (SelectedIndex == 13)
         {
-            Finish();
-            return;
+            if (cardQueue_ != null)
+            {
+                if (LoadCardSelected && defaultCard_ != "" && !inputsLocked_)
+                {
+                    if (cancel_ == null || cancel_.IsCancellationRequested)
+                    {
+                        cancel_ = new CancellationTokenSource();
+                        // Bring up the cardreader wait screen.
+                        ModalText = "Reader in use, please wait.";
+                        ModalVisible = true;
+                        // Add our card request to the queue.
+                        cardQueue_.AddJob(id_, updateModalText, loadCardCallback, inputLockCallback, cancel_);
+                    }
+                }
+            }
         }
 
         ClearBinding(SelectedIndex);
@@ -485,7 +498,7 @@ public partial class RebindViewModel : ViewModelBase
             if (Bindings.Main[button])
             {
                 if (SaveSelected) // (SelectedIndex == 12)
-                    {
+                {
                     Finish();
                     break;
                 }
