@@ -71,7 +71,7 @@ public class ClientLaunchViewModel : ViewModelBase
             AudioId = Output == null ? null : Output.Audio.DevicePath,
             IpOrInterface = ClientInfo.NetworkValue,
             UseInterface = (ClientInfo.NetworkMode == 0),
-            Server = ClientInfo.ServerIP,
+            Server = $"{ClientInfo.ServerIP}:{ClientInfo.ServerPort}",
         };
         config.Write(ConfigPath);
         config.WriteNetwork(ConfigPath);

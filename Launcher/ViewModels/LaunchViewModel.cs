@@ -148,6 +148,9 @@ public partial class LaunchViewModel : ViewModelBase
 
                 if (!client.Start(Main)) return;
                 await client.WaitForWindow();
+
+                // Doing this too quickly sometimes leaves hidden windows on top.
+                await Task.Delay(5000);
                 client.MoveGameWindow();
             }
             tasks.Add(lambda());

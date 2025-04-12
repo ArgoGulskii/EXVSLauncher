@@ -21,10 +21,10 @@ internal class ConfigIni
     {
         var ini = new INIFile(path);
         ini.WrapValueInQuotes = false;
-        if (!ini.HasSection("controller"))
-            ini.AddSection("controller");
+        if (!ini.HasSection("controller-rebind"))
+            ini.AddSection("controller-rebind");
 
-        var section = ini.GetSection("controller");
+        var section = ini.GetSection("controller-rebind");
         section["Enabled"] = ControllerEnabled ? "true" : "false";
         if (ControllerPath != null)
         {
@@ -43,18 +43,17 @@ internal class ConfigIni
         section["Card"] = string.Join(",", Bindings.Card);
         section["Test"] = string.Join(",", Bindings.Test);
 
-
         if (!ini.HasSection("audio"))
             ini.AddSection("audio");
 
         var audio = ini.GetSection("audio");
-        if (AudioId != null)
-        {
-            audio["Device"] = AudioId;
-        }
-        else
+        if (AudioId == "")
         {
             audio.Remove("Device");
+        }
+        else if (AudioId != null)
+        {
+            audio["Device"] = AudioId;
         }
 
         if (audio.ContainsKey("Id")) audio.Remove("Id");

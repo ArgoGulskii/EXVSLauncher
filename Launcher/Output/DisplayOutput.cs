@@ -133,7 +133,13 @@ public class DisplayOutput
                     splitY = 2;
                 }
 
-                var displayCandidate = new DisplayOutput(displayTarget.FriendlyName, displayTarget.DevicePath)
+                var displayName = displayTarget.ToDisplayDevice().DeviceName;
+                if (displayName == "Generic PnP Monitor" || displayName == "Generic Non-PnP Monitor")
+                {
+                    displayName = displayTarget.FriendlyName;
+                }
+
+                var displayCandidate = new DisplayOutput(displayName, displayTarget.DevicePath)
                 {
                     Rect = rect,
                     SplitXCount = splitX,
@@ -146,7 +152,7 @@ public class DisplayOutput
                     result.Add(Split(displayCandidate, 0, 0, "Left"));
                     result.Add(Split(displayCandidate, 1, 0, "Right"));
                 }
-                else if (splitX == 2 && splitY == 1)
+                else if (splitX == 2 && splitY == 2)
                 {
                     result.Add(Split(displayCandidate, 0, 0, "Top Left"));
                     result.Add(Split(displayCandidate, 1, 0, "Top Right"));
