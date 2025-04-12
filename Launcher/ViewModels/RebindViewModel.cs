@@ -167,7 +167,6 @@ public partial class RebindViewModel : ViewModelBase
         defaultCard_ = defaultCard;
         cardId_ = defaultCard;
         cardName_ = "-";
-        accessCode_ = "1111";   // 1111 is just the default value we set, lol
         cardQueue_ = cardQueue;
 
         ControllerConfigHttpHelper.SetBaseClient(serverIP, serverPort);
@@ -222,7 +221,6 @@ public partial class RebindViewModel : ViewModelBase
         {
             CardName = "-";
         }
-        accessCode_ = "1111";   // 1111 is just the default value we set, lol
     }
 
     public void Start()
@@ -257,7 +255,7 @@ public partial class RebindViewModel : ViewModelBase
             var card = new CardIni()
             {
                 CardId = cardId_,
-                AccessCode = accessCode_,
+                AccessCode = cardId_,
             };
 
             card.Write(cardPath_);
@@ -581,10 +579,10 @@ public partial class RebindViewModel : ViewModelBase
                 }
                 else
                 {
-                    string? sessionId = await ControllerConfigHttpHelper.PreLoadCard(cardId_, accessCode_);
+                    string? sessionId = await ControllerConfigHttpHelper.PreLoadCard(cardId_, cardId_);
                     if (sessionId != null)
                     {
-                        bool? registered = await ControllerConfigHttpHelper.RegisterCard(cardId_, accessCode_, sessionId);
+                        bool? registered = await ControllerConfigHttpHelper.RegisterCard(cardId_, cardId_, sessionId);
                         if (registered != null && registered.Value)
                         {
                             PresetText = "NEW CARD (Custom)";
@@ -786,7 +784,6 @@ public partial class RebindViewModel : ViewModelBase
     private InputState lastState_ = new();
     private int id_;
     private string cardId_;
-    private string accessCode_;
 
     private bool inputsLocked_ = false;
     private CancellationTokenSource? cancel_ = null;

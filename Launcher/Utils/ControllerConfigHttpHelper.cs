@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -32,23 +33,13 @@ public class ControllerConfigHttpHelper
 {
     private static HttpClient? sharedClient;
 
-    public void SetBaseClient(string serverIp, string serverPort)
+    public void SetBaseClient(string serverHost)
     {
-        if (serverPort != "")
+        sharedClient = new()
         {
-            sharedClient = new()
-            {
-                BaseAddress = new Uri("http://" + serverIp + ":" + serverPort),
-            };
-        }
-        else
-        {
-            sharedClient = new()
-            {
-                BaseAddress = new Uri("http://" + serverIp),
-            };
-        }
-        sharedClient.Timeout = TimeSpan.FromSeconds(5);
+            BaseAddress = new Uri("http://" + serverHost),
+            Timeout = TimeSpan.FromSeconds(5),
+        };
     }
 
     public async Task<CardInfo?> GetCardInfo(string cardId)
@@ -66,7 +57,7 @@ public class ControllerConfigHttpHelper
             Exists = false,
         };
 
-        using HttpResponseMessage response = await sharedClient.GetAsync("card/getBasicDisplayProfileById/" + cardId);
+        using HttpResponseMessage response = await sharedClient.GetAsync("ui/card/getBasicDisplayProfileById/" + cardId);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -81,9 +72,10 @@ public class ControllerConfigHttpHelper
             var jsondict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
             if (jsondict != null)
             {
-                foreach (KeyValuePair<string, object> kvp in jsondict)
+                var name = jsondict["userName"];
+                if (name != null)
                 {
-                    if (kvp.Key == "userName") ci.Name = kvp.Value.ToString();
+                    ci.Name = name.ToString();
                     ci.Exists = true;
                 }
             }
@@ -103,7 +95,7 @@ public class ControllerConfigHttpHelper
             return null;
         }
 
-        using HttpResponseMessage response = await sharedClient.GetAsync("card/getControllerConfigById/" + cardId);
+        using HttpResponseMessage response = await sharedClient.GetAsync("ui/controller/get/" + cardId);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -112,31 +104,44 @@ public class ControllerConfigHttpHelper
         }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
-        if (jsonResponse != "")
+        if (jsonResponse == "")
         {
-            Console.WriteLine($"config response: '{jsonResponse}'\n");
-            var jsondict = JsonSerializer.Deserialize<Dictionary<string, int[]>>(jsonResponse);
-
-            ControllerConfig cc = new();
-
-            if (jsondict != null)
-            {
-                jsondict.TryGetValue("aKey", out cc.AKey);
-                jsondict.TryGetValue("bKey", out cc.BKey);
-                jsondict.TryGetValue("cKey", out cc.CKey);
-                jsondict.TryGetValue("dKey", out cc.DKey);
-                jsondict.TryGetValue("subKey", out cc.SubKey);
-                jsondict.TryGetValue("specialShootingKey", out cc.SpecialShootingKey);
-                jsondict.TryGetValue("specialMeleeKey", out cc.SpecialMeleeKey);
-                jsondict.TryGetValue("burstKey", out cc.BurstKey);
-                jsondict.TryGetValue("startKey", out cc.StartKey);
-                jsondict.TryGetValue("cardKey", out cc.CardKey);
-
-                return cc;
-            }
+            Console.WriteLine("GetControllerConfig: empty json response");
+            return null;
         }
-        Console.WriteLine("no response get controller");
-        return null;
+
+        Console.WriteLine($"config response: '{jsonResponse}'\n");
+        var jsonstring = JsonSerializer.Deserialize<string>(jsonResponse);
+        if (jsonstring == "")
+        {
+            Console.WriteLine("GetControllerConfig: empty json string");
+            return null;
+        }
+
+        var jsondict = JsonSerializer.Deserialize<Dictionary<string, int[]>>(jsonstring);
+
+        ControllerConfig cc = new();
+
+        if (jsondict == null)
+        {
+            Console.WriteLine("GetControllerConfig: no json dict");
+            return null;
+        }
+
+        jsondict.TryGetValue("AKey", out cc.AKey);
+        jsondict.TryGetValue("BKey", out cc.BKey);
+        jsondict.TryGetValue("CKey", out cc.CKey);
+        jsondict.TryGetValue("DKey", out cc.DKey);
+        jsondict.TryGetValue("SubKey", out cc.SubKey);
+        jsondict.TryGetValue("SpecialShootingKey", out cc.SpecialShootingKey);
+        jsondict.TryGetValue("SpecialMeleeKey", out cc.SpecialMeleeKey);
+        jsondict.TryGetValue("BurstKey", out cc.BurstKey);
+        jsondict.TryGetValue("StartKey", out cc.StartKey);
+        jsondict.TryGetValue("CardKey", out cc.CardKey);
+
+        Console.WriteLine("controller config: " + cc);
+
+        return cc;
     }
 
     public async Task<bool> SendControllerConfig(string cardId, ControllerConfig bindings)
@@ -147,22 +152,24 @@ public class ControllerConfigHttpHelper
             return false;
         }
 
+        var config = new
+        {
+            AKey = bindings.AKey,
+            BKey = bindings.BKey,
+            CKey = bindings.CKey,
+            DKey = bindings.DKey,
+            SubKey = bindings.SubKey,
+            SpecialShootingKey = bindings.SpecialShootingKey,
+            SpecialMeleeKey = bindings.SpecialMeleeKey,
+            BurstKey = bindings.BurstKey,
+            StartKey = bindings.StartKey,
+            CardKey = bindings.CardKey
+        };
+
         var data = new
         {
             ChipId = cardId,
-            ControllerConfig = new
-            {
-                AKey = bindings.AKey,
-                BKey = bindings.BKey,
-                CKey = bindings.CKey,
-                DKey = bindings.DKey,
-                SubKey = bindings.SubKey,
-                SpecialShootingKey = bindings.SpecialShootingKey,
-                SpecialMeleeKey = bindings.SpecialMeleeKey,
-                BurstKey = bindings.BurstKey,
-                StartKey = bindings.StartKey,
-                CardKey = bindings.CardKey
-            },
+            ControllerConfig = JsonSerializer.Serialize(config),
         };
 
         string jsonData = JsonSerializer.Serialize(data);
@@ -171,7 +178,7 @@ public class ControllerConfigHttpHelper
 
         Console.WriteLine("\n\njson string: " + jsonString.ToString());
 
-        using HttpResponseMessage response = await sharedClient.PostAsync("card/updateControllerConfig/", jsonString);
+        using HttpResponseMessage response = await sharedClient.PostAsync("ui/controller/set", jsonString);
 
         if (!response.IsSuccessStatusCode)
         {
