@@ -45,6 +45,15 @@ class Program
     {
         AllocConsole();
         Console.SetOut(new ConsoleMirror(Console.Out));
+        AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+        {
+            var ex = e.ExceptionObject as Exception;
+            if (ex != null)
+            {
+                Console.WriteLine($"Unhandled exception: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+            }
+        };
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);
     }
