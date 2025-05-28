@@ -53,6 +53,13 @@ public partial class PresetViewModel : ViewModelBase
         get => serverPath_;
         set => this.RaiseAndSetIfChanged(ref serverPath_, value);
     }
+
+    private string serverHost_;
+    public string ServerHost
+    {
+        get => serverHost_;
+        set => this.RaiseAndSetIfChanged(ref serverHost_, value);
+    }
 }
 
 class PresetViewModelConverter : JsonConverter<PresetViewModel>
@@ -94,6 +101,9 @@ class PresetViewModelConverter : JsonConverter<PresetViewModel>
                 case "serverpath":
                     result.ServerPath = JsonSerializer.Deserialize<string>(ref reader, options)!;
                     break;
+                case "serverhost":
+                    result.ServerHost = JsonSerializer.Deserialize<string>(ref reader, options)!;
+                    break;
                 case "clients":
                     result.Clients = JsonSerializer.Deserialize<ClientsViewModel>(ref reader, options)!;
                     break;
@@ -119,6 +129,9 @@ class PresetViewModelConverter : JsonConverter<PresetViewModel>
 
         writer.WritePropertyName("ServerPath");
         JsonSerializer.Serialize(writer, pvm.ServerPath, options);
+
+        writer.WritePropertyName("ServerHost");
+        JsonSerializer.Serialize(writer, pvm.ServerHost, options);
 
         writer.WritePropertyName("Clients");
         JsonSerializer.Serialize(writer, pvm.Clients, options);

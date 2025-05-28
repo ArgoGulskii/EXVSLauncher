@@ -32,6 +32,9 @@ public partial class PresetsViewModel : ViewModelBase
 
     readonly ObservableAsPropertyHelper<PresetViewModel?> selectedPreset;
     public PresetViewModel? SelectedPreset => selectedPreset.Value;
+
+    public string ServerIP { get; set; }
+    public string ServerPort { get; set; }
 }
 
 class PresetsViewModelConverter : JsonConverter<PresetsViewModel>
@@ -52,7 +55,8 @@ class PresetsViewModelConverter : JsonConverter<PresetsViewModel>
 
         while (reader.TokenType != JsonTokenType.EndArray)
         {
-            result.Presets.Add(JsonSerializer.Deserialize<PresetViewModel>(ref reader, options)!);
+            var preset = JsonSerializer.Deserialize<PresetViewModel>(ref reader, options)!;
+            result.Presets.Add(preset);
             reader.Read();
         }
         return result;

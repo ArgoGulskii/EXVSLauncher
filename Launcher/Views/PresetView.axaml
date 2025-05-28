@@ -54,5 +54,11 @@
         <Border Grid.Row="2" Grid.Column="1">
             <TextBox Text="{Binding ServerPath}"/>
         </Border>
+        <Border Grid.Row="3" Grid.Column="0">
+            <TextBlock Text="Server Host" />
+        </Border>
+        <Border Grid.Row="3" Grid.Column="1">
+            <TextBox Text="{Binding ServerHost}"/>
+        </Border>
     </Grid>
 </UserControl>

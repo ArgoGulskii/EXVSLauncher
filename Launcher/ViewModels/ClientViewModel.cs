@@ -21,8 +21,6 @@ public partial class ClientViewModel : ViewModelBase
         AutoRebind = false;
 
         DefaultCard = "";
-        ServerIP = "localhost";
-        ServerPort = "80";
 
         Id = 0;
 
@@ -62,9 +60,6 @@ public partial class ClientViewModel : ViewModelBase
     public bool AutoRebind { get; set; }
 
     public string DefaultCard { get; set; }
-    public string ServerIP { get; set; }
-    public string ServerPort { get; set; }
-
 
     // Metadata for launching, not used for configuration
     public int Id { get; set; }
@@ -131,12 +126,13 @@ class ClientViewModelConverter : JsonConverter<ClientViewModel>
                 case "defaultcard":
                     result.DefaultCard = JsonSerializer.Deserialize<string>(ref reader, options);
                     break;
+
+                // Deprecated fields, moved to Preset
                 case "serverip":
-                    result.ServerIP = JsonSerializer.Deserialize<string>(ref reader, options);
                     break;
                 case "serverport":
-                    result.ServerPort = JsonSerializer.Deserialize<string>(ref reader, options);
                     break;
+
                 default:
                     throw new JsonException($"Unknown property in ClientViewModel: {propertyName}");
             }
@@ -146,46 +142,40 @@ class ClientViewModelConverter : JsonConverter<ClientViewModel>
 
     public override void Write(
         Utf8JsonWriter writer,
-        ClientViewModel mvm,
+        ClientViewModel cvm,
         JsonSerializerOptions options)
     {
         writer.WriteStartObject();
 
         writer.WritePropertyName("Name");
-        JsonSerializer.Serialize(writer, mvm.Name, options);
+        JsonSerializer.Serialize(writer, cvm.Name, options);
 
         writer.WritePropertyName("Mode");
-        JsonSerializer.Serialize(writer, mvm.Mode, options);
+        JsonSerializer.Serialize(writer, cvm.Mode, options);
 
         writer.WritePropertyName("NetworkMode");
-        JsonSerializer.Serialize(writer, mvm.NetworkMode, options);
+        JsonSerializer.Serialize(writer, cvm.NetworkMode, options);
 
         writer.WritePropertyName("NetworkValue");
-        JsonSerializer.Serialize(writer, mvm.NetworkValue, options);
+        JsonSerializer.Serialize(writer, cvm.NetworkValue, options);
 
         writer.WritePropertyName("Path");
-        JsonSerializer.Serialize(writer, mvm.Path, options);
+        JsonSerializer.Serialize(writer, cvm.Path, options);
 
         writer.WritePropertyName("GamePath");
-        JsonSerializer.Serialize(writer, mvm.GamePath, options);
+        JsonSerializer.Serialize(writer, cvm.GamePath, options);
 
         writer.WritePropertyName("Hidden");
-        JsonSerializer.Serialize(writer, mvm.Hidden, options);
+        JsonSerializer.Serialize(writer, cvm.Hidden, options);
 
         writer.WritePropertyName("Enabled");
-        JsonSerializer.Serialize(writer, mvm.Enabled, options);
+        JsonSerializer.Serialize(writer, cvm.Enabled, options);
 
         writer.WritePropertyName("AutoRebind");
-        JsonSerializer.Serialize(writer, mvm.AutoRebind, options);
+        JsonSerializer.Serialize(writer, cvm.AutoRebind, options);
 
         writer.WritePropertyName("DefaultCard");
-        JsonSerializer.Serialize(writer, mvm.DefaultCard, options);
-
-        writer.WritePropertyName("ServerIP");
-        JsonSerializer.Serialize(writer, mvm.ServerIP, options);
-
-        writer.WritePropertyName("ServerPort");
-        JsonSerializer.Serialize(writer, mvm.ServerPort, options);
+        JsonSerializer.Serialize(writer, cvm.DefaultCard, options);
 
         writer.WriteEndObject();
     }

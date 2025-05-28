@@ -143,7 +143,7 @@ public partial class LaunchViewModel : ViewModelBase
 
                 if (client.Visible && client.AutoRebind)
                 {
-                    client.StartRebind(cReaderQueue_);
+                    client.StartRebind(Main, cReaderQueue_);
                 }
 
                 if (!client.Start(Main)) return;

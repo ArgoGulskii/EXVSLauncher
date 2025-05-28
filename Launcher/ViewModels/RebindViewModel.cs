@@ -154,11 +154,11 @@ public class RebindBindings
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public partial class RebindViewModel : ViewModelBase
 {
-    public RebindViewModel() : this(0, null!, null!, "", "", "localhost", "", null)
+    public RebindViewModel() : this(0, null!, null!, "", "", "localhost", null)
     {
     }
 
-    public RebindViewModel(int id, RebindWindow window, string configPath, string cardPath, string defaultCard, string serverIP, string serverPort, CardQueue? cardQueue)
+    public RebindViewModel(int id, RebindWindow window, string configPath, string cardPath, string defaultCard, string serverHost, CardQueue? cardQueue)
     {
         id_ = id;
         rebindWindow_ = window;
@@ -169,7 +169,7 @@ public partial class RebindViewModel : ViewModelBase
         cardName_ = "-";
         cardQueue_ = cardQueue;
 
-        ControllerConfigHttpHelper.SetBaseClient(serverIP, serverPort);
+        ControllerConfigHttpHelper.SetBaseClient(serverHost);
 
         var index = this.WhenAnyValue(x => x.SelectedIndex);
         presetSelected_ = index.Select(idx => idx == 0).ToProperty(this, x => x.PresetSelected);
