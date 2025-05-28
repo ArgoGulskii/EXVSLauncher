@@ -23,7 +23,7 @@
             <RowDefinition Height="25"/>
             <RowDefinition Height="50"/>
             <RowDefinition Height="50"/>
-			<RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
         <Grid.Styles>
             <Style Selector="Border" >
@@ -95,11 +95,11 @@
             <TextBox Text="{Binding GamePath}"/>
         </Border>
 
-		<Border Grid.Row="7" Grid.Column="0">
-		    <TextBlock Text="Default Card"/>
-		</Border>
-		<Border Grid.Row="7" Grid.Column="1">
-			<TextBox Text="{Binding DefaultCard}"/>
-		</Border>
+        <Border Grid.Row="7" Grid.Column="0">
+            <TextBlock Text="Default Card"/>
+        </Border>
+        <Border Grid.Row="7" Grid.Column="1">
+            <TextBox Text="{Binding DefaultCard}"/>
+        </Border>
     </Grid>
 </UserControl>
