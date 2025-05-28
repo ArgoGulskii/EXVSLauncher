@@ -5,6 +5,8 @@ using ReactiveUI;
 using System.Collections.Generic;
 using NAudio.CoreAudioApi;
 using System.Reflection;
+using System.Threading;
+using System.Windows.Automation;
 
 namespace Launcher.Output;
 
@@ -69,6 +71,20 @@ public class OutputAssignment : ReactiveObject
         audioOut.Init(audioStream);
         audioOut.Play();
         AudioPreview = audioOut;
+
+        (new Thread(() =>
+        {
+            Thread.Sleep(3500);
+            lock (this)
+            {
+                if (this.AudioPreview == audioOut)
+                {
+                    this.AudioPreview.Stop();
+                    AudioPreview.Dispose();
+                    AudioPreview = null;
+                }
+            }
+        })).Start();
     }
 
     public void StopPreview()
@@ -79,11 +95,14 @@ public class OutputAssignment : ReactiveObject
             Preview = null;
         }
 
-        if (AudioPreview != null)
+        lock (this)
         {
-            AudioPreview.Stop();
-            AudioPreview.Dispose();
-            AudioPreview = null;
+            if (AudioPreview != null)
+            {
+                AudioPreview.Stop();
+                AudioPreview.Dispose();
+                AudioPreview = null;
+            }
         }
     }
 }
